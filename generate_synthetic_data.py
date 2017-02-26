@@ -1,11 +1,28 @@
 import numpy as np
 from snap import *
 
-num_blocks = 5
-size_blocks = 5
+##Parameters to play with
+
+window_size = 5
+number_of_sensors = 5
 sparsity_inv_matrix = 0.2
-block_matrices = {} ##Stores all the block matrices
 rand_seed = 10
+number_of_clusters = 3
+break_points = np.array([1,2,3])*200
+seg_ids = [0,1,0]
+save_inverse_covarainces = True
+out_file_name = "Synthetic Data Matrix rand_seed =[0,1] generated2.csv"
+###########################################################
+
+
+
+
+
+block_matrices = {} ##Stores all the block matrices
+num_blocks = window_size
+size_blocks = number_of_sensors
+sparsity_inv_matrix = sparsity_inv_matrix
+block_matrices = {} ##Stores all the block matrices
 
 def generate_inverse(rand_seed):
 	np.random.seed(rand_seed)
@@ -70,9 +87,7 @@ def generate_inverse(rand_seed):
 
 
 ############GENERATE POINTS
-num_clusters = 3
-break_points = np.array([1,2,3])*200#,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180])*100#list(np.array([250,500,750,1000,1250,1500,1750,2000,2250,2500,2750,3000,3250,3500])*3)
-seg_ids = [0,1,0]#,3,4,5,6,7,8,8,7,6,5,4,3,2,1,0]#[0,1,2,3,4,5,6,6,5,4,3,2,1,0]
+num_clusters = number_of_clusters
 cluster_mean = np.zeros([size_blocks,1])
 cluster_mean_stacked = np.zeros([size_blocks*num_blocks,1])
 
@@ -82,8 +97,9 @@ cluster_covariances = {}
 for cluster in xrange(num_clusters):
 	cluster_inverses[cluster] = generate_inverse(rand_seed = cluster)
 	cluster_covariances[cluster] = np.linalg.inv(cluster_inverses[cluster])
-	np.savetxt("Inverse Covariance cluster ="+ str(cluster) +".csv", cluster_inverses[cluster],delimiter= ",",fmt='%1.6f')
-	np.savetxt("Covariance cluster ="+ str(cluster) +".csv", cluster_covariances[cluster],delimiter= ",",fmt='%1.6f')
+	if save_inverse_covarainces:
+		np.savetxt("Inverse Covariance cluster ="+ str(cluster) +".csv", cluster_inverses[cluster],delimiter= ",",fmt='%1.6f')
+		np.savetxt("Covariance cluster ="+ str(cluster) +".csv", cluster_covariances[cluster],delimiter= ",",fmt='%1.6f')
 
 print "dont till this!!"
 
@@ -183,7 +199,7 @@ print "done with generating the data!!!"
 print "length of generated Data is:", Data.shape[0]
 
 ##save the generated matrix
-np.savetxt("Synthetic Data Matrix rand_seed =[0,1] generated2.csv", Data, delimiter=",", fmt='%1.4f')
+np.savetxt(out_file_name, Data, delimiter=",", fmt='%1.4f')
 
 
 
