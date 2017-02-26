@@ -29,7 +29,7 @@ maxClusters = 3## Number of clusters + 1
 threshold = 10.5e-5##Threshold below whihc values in inverse matrix are zero
 write_out_file = False ##Only if True are any files outputted
 num_stacked = num_blocks - 1
-
+input_file = "Synthetic Data Matrix rand_seed =[0,1] generated2.csv"
 ##colors used in hexadecimal format
 hexadecimal_color_list = ["cc0000","0000ff","003300","33ff00","00ffcc","ffff00","ff9900","ff00ff","cccc66","666666","ffccff","660000","00ff00","ffffff","3399ff","006666","330000","ff0000","cc99ff","b0800f","3bd9eb","ef3e1b"]
 
@@ -42,7 +42,7 @@ print "num stacked", num_stacked
 
 
 print "completed getting the data"
-Data = np.loadtxt("Synthetic Data Matrix rand_seed =[0,1] generated2.csv", delimiter= ",")
+Data = np.loadtxt(input_file, delimiter= ",")
 Data_pre = Data
 UNNORMALIZED_Data = Data*1000
 (m,n) = Data.shape
