@@ -8,12 +8,11 @@ number_of_sensors = 5
 sparsity_inv_matrix = 0.2
 rand_seed = 10
 number_of_clusters = 3
+cluster_ids = [0,1,0]
 break_points = np.array([1,2,3])*200
-seg_ids = [0,1,0]
 save_inverse_covarainces = True
 out_file_name = "Synthetic Data Matrix rand_seed =[0,1] generated2.csv"
 ###########################################################
-
 
 
 
@@ -23,6 +22,7 @@ num_blocks = window_size
 size_blocks = number_of_sensors
 sparsity_inv_matrix = sparsity_inv_matrix
 block_matrices = {} ##Stores all the block matrices
+seg_ids = cluster_ids
 
 def generate_inverse(rand_seed):
 	np.random.seed(rand_seed)
