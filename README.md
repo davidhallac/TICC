@@ -39,7 +39,7 @@ prints the binary accuracy, if the correct method for computing the confusion ma
 ```
 car.py
 ```
-Runs an instance of TICC algorithm on the car example, as described in the paper. The parameters are the same as the TICC example.
+Runs an instance of TICC algorithm on the car example (case-study), as described in the paper. The parameters are the same as the TICC example.
 
 **Parameters**
 lambda_parameter : the lambda regularization parameter as described in the paper
@@ -62,7 +62,7 @@ saves a .csv file with the color information for each of the time stamps
 ```
 network_accuracy.py
 ```
-Runs an instance of TICC algorithm on the T-by-n data matrix as described in the paper. The parameters are the same as the TICC example.
+Runs an instance of TICC algorithm on the T-by-n data matrix as described in the paper. Used for generating the network accuracy table as shown in the paper. The parameters are the same as the TICC example.
 
 **Parameters**
 lambda_parameter : the lambda regularization parameter as described in the paper
