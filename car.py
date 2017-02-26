@@ -23,9 +23,14 @@ number_of_clusters = 11
 threshold = 2e-5
 write_out_file = False ##Only if True are any files outputted
 scaling_time = 10
-prefix_string = "VW_data_lambda=" + str(lambda_parameter)+"beta = "+str(beta) + "clusters=" +str(number_of_clusters)+"/"
+prefix_string = "data_lambda=" + str(lambda_parameter)+"beta = "+str(beta) + "clusters=" +str(number_of_clusters)+"/"
 
-hexadecimal_color_list = ["000099","ff00ff","00ff00","663300","996633","66ffff","3333cc","660066","66ccff","cc0000","0000ff","003300","33ff00","00ffcc","ffff00","ff9900","ff00ff","cccc66","666666","ffccff","660000","00ff00","ffffff","3399ff","006666","330000","ff0000","cc99ff","b0800f","3bd9eb","ef3e1b"]
+##Enter the location of data file
+data_pre = pd.read_csv('data.tsv', sep ='\t',low_memory = False)
+print "\n\ncompleted getting the data"
+###########################################################
+
+##set other parameter values
 maxClusters = number_of_clusters + 1
 seg_len = 100
 num_blocks = window_size
@@ -41,8 +46,6 @@ print "num_cluster", maxClusters-1
 
 
 ######### Get Date into proper format
-data_pre = pd.read_csv('vw_data_4.tsv', sep ='\t',low_memory = False)
-print "\n\ncompleted getting the data"
 
 ##111,...1505,75 ---> Break pedal, Y -accn, sw - angle, x - accn, Vel, RPM,gas pedal
 out1 = data_pre.iloc[:,[111,1433,1498,1432,1471,1505,75,1613,1614]]
@@ -53,6 +56,11 @@ Data_pre = UNNORMALIZED_Data
 Data = np.array(out2)[165:,:7]#Data_pre[:,:6]
 (m,n) = Data.shape
 len_D_total = m
+
+
+##color list used here
+hexadecimal_color_list = ["000099","ff00ff","00ff00","663300","996633","66ffff","3333cc","660066","66ccff","cc0000","0000ff","003300","33ff00","00ffcc","ffff00","ff9900","ff00ff","cccc66","666666","ffccff","660000","00ff00","ffffff","3399ff","006666","330000","ff0000","cc99ff","b0800f","3bd9eb","ef3e1b"]
+
 
 def upper2Full(a, eps = 0):
     ind = (a<eps)&(a>-eps)
