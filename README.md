@@ -96,6 +96,26 @@ break_points : The end point of the segments. So length of segment 'i' = break_p
 save_inverse_covariances : Boolean. Flag indicating if the computed inverse covarainces for each of the clusters should be saved as "Inverse Covaraince cluster = cluster#.csv"
 out_file_name : The file name where the .csv data matrix should be stored.
 
+**Returns**
+saves a .csv file with data matrix of shape T-by-n
+saves a .csv file for each of the inverse covariances of each cluster if the save_inverse_covariances flag is True.
+
+----
+```
+scalability_test.py
+```
+Runs an instance of the scalability test. Prints out the time required for each step: E-step (DP algorithm) and M-step (Optimization using Toeplitz Graphical Lasso).
+
+**Parameters**
+number_of_cluster: the number of clusters 'k' that the time stamps are clustered into
+window_size : the size of the sliding window
+input_file : Location of the data file of size T-by-n.
+maxIters : maximum iteration of the TICC algorithm
+
+**Returns**
+prints out the time taken for each of the steps in TICC algotihm. This function was used to generate the scalability plot in the paper.
+
+
 
 Example Usage
 ======================
@@ -113,6 +133,10 @@ python TICC.py
   3. For generating the network accuracy plots, use the Network.py file. Add the same parameters as above in the network_accuracy.py file and additionally save the true Inverse covariances as "Inverse Covaraince cluster = 'cluster#'.csv" in the same directory as the network_accuracy.py file. Next run:
 ```
 python network_accuracy.py
+```
+  4. For running a scalability experiment, use the scalability_test.py file. Set the parameters within the file same as the TICC.py file, and run the following command:
+```
+python scalability_test.py
 ```
   
 References
