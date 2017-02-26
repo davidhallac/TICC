@@ -449,7 +449,7 @@ for iters in xrange(maxIters):
 			lamb = np.zeros((probSize,probSize)) + lam_sparse
 			S = np.cov(np.transpose(D_train) )
 
-			print "starting the OPTIMIZATION for cluster#", cluster
+			print "starting the OPTIMIZATION"
 			#Set up the Toeplitz graphical lasso problem
 			gvx = TGraphVX()
 			theta = semidefinite(probSize,name='theta')
@@ -461,7 +461,7 @@ for iters in xrange(maxIters):
 			
 			##solve using customized ADMM solver
 			gvx.Solve(Verbose=False, MaxIters=1000, Rho = 1, EpsAbs = 1e-6, EpsRel = 1e-6)
-			print "\ncompleted solving the optimization problem for the cluster"
+
 
 			#THIS IS THE SOLUTION
 			val = gvx.GetNodeValue(0,'theta')
@@ -479,9 +479,9 @@ for iters in xrange(maxIters):
 			train_cluster_inverse[cluster] = X2
 
 	cluster_norms = list(np.zeros(num_clusters))
-	print "printing the cluster len"
-	for cluster in xrange(num_clusters):
-		print "length of the cluster ", cluster,"------>", len_train_clusters[cluster]
+
+	# for cluster in xrange(num_clusters):
+	# 	print "length of the cluster ", cluster,"------>", len_train_clusters[cluster]
 	##Computing the norms
 	if iters != 0:
 		for cluster in xrange(num_clusters):
@@ -515,7 +515,6 @@ for iters in xrange(maxIters):
 
 	old_train_clusters = train_clusters
 	old_computed_covariance = computed_covariance
-	# print "UPDATED THE OLD COVARIANCE"
 
 
 
@@ -543,12 +542,13 @@ for iters in xrange(maxIters):
 	clustered_points = updateClusters(LLE_all_points_clusters,switch_penalty = switch_penalty)
 	print "\ncompleted smoothening algorithm"
 	print "\n\nprinting the length of points in each cluster"
-
 	for cluster in xrange(num_clusters):
 		print "length of cluster #", cluster, "-------->", sum([x== cluster for x in clustered_points])
 	true_confusion_matrix = np.zeros([num_clusters,num_clusters])
 
 	##Save a figure of segmentation
+	# print "length of clustered_points", len(clustered_points)
+	# print "length of sorted training_idx", len(sorted_training_idx)
 	plt.figure()
 	plt.plot(sorted_training_idx[0:len(clustered_points)],clustered_points,color = "r")#,marker = ".",s =100)
 	plt.ylim((-0.5,num_clusters + 0.5))
@@ -685,6 +685,9 @@ for iters in xrange(maxIters):
 			cluster = 0
 		true_answers[point] = cluster
 
+	# print "length of sorted_test_idx", len(sorted_test_idx)
+	# print "length of true answers", len(true_answers)
+	# print "new length", len(sorted_training_idx[0:len(clustered_points)])
 	plt.figure()
 	plt.plot(sorted_training_idx[0:len(clustered_points)],true_answers,color = "k")
 	plt.ylim((-0.5,num_clusters + 0.5))
@@ -699,6 +702,10 @@ for iters in xrange(maxIters):
 	binary_Kmeans = (true_confusion_matrix_kmeans[0,0] + true_confusion_matrix_kmeans[1,1])/len(clustered_points_test)
 	binary_Kmeans = np.max([binary_Kmeans,1-binary_Kmeans])
 
+
+	# print "TEST EM TRUE confusion MATRIX:\n", true_confusion_matrix_EM
+	# print "TEST GMM TRUE confusion MATRIX:\n", true_confusion_matrix_GMM					
+	# print "TEST KMEANS TRUE CONFUSION MATRIX:\n", true_confusion_matrix_kmeans
 
 	##Create the F1 score from the graphs from k-means and GMM
 	##Get the train and test points
@@ -774,7 +781,6 @@ for iters in xrange(maxIters):
     ##Assume its a 2x2 matrix?
 	actual_clusters = {}
 	for cluster in xrange(num_clusters):
-		print "getting the actual Inverse covariances"
 		actual_clusters[cluster] = np.loadtxt("Inverse Covariance cluster =" + str(cluster)+".csv", delimiter = ",")
 
     ##compute the appropriate matching
@@ -814,7 +820,7 @@ for iters in xrange(maxIters):
 
 	print "\n\n\n"
 	# print "The F1 scores is:", F1_EM,F1_GMM, F1_Kmeans
-	print "The binary accuracy at the end of iteration is:", binary_EM, binary_GMM, binary_Kmeans
+	# print "The binary accuracy", binary_EM, binary_GMM, binary_Kmeans
 
 	if np.array_equal(old_clustered_points,clustered_points):
 		print "\n\n\n\nCONVERGED!!! BREAKING EARLY!!!"
@@ -827,22 +833,18 @@ train_confusion_matrix_GMM = compute_confusion_matrix(num_clusters,gmm_clustered
 train_confusion_matrix_kmeans = compute_confusion_matrix(num_clusters,clustered_points_kmeans,sorted_training_idx)
 test_confusion_matrix_EM = compute_confusion_matrix(num_clusters,clustered_test,sorted_test_idx)
 
-out = -1#computeNetworkAccuracy(matching_EM, train_cluster_inverse,num_clusters)
+out = computeNetworkAccuracy(matching_EM, train_cluster_inverse,num_clusters)
 
-# print "the NETWORK F1 score is:", out
+print "the network accuracy F1 score is:", out
 
 
-# print "train matrices are: EM\n", train_confusion_matrix_EM
-# print "\n GMM", train_confusion_matrix_GMM
-# print "\n kmeans", train_confusion_matrix_kmeans
-# print " \n"
 f1_EM_tr = computeF1_macro(train_confusion_matrix_EM,matching_EM,num_clusters)
 f1_GMM_tr = computeF1_macro(train_confusion_matrix_GMM,matching_GMM,num_clusters)
 f1_kmeans_tr = computeF1_macro(train_confusion_matrix_kmeans,matching_Kmeans,num_clusters)
 f1_EM_test = computeF1_macro(test_confusion_matrix_EM,matching_EM,num_clusters)
 # print "The TEST binary accuracy", binary_EM, binary_GMM, binary_Kmeans
-print "\n\n"
-print "FINAL TRAINING MACRO F1 score:", f1_EM_tr, f1_GMM_tr, f1_kmeans_tr
+# print "\n\n"
+# print "TRAINING F1 score:", f1_EM_tr, f1_GMM_tr, f1_kmeans_tr
 # print "TEST F1 score:", f1_EM_test
 correct_EM = 0
 correct_GMM = 0
