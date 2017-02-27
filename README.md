@@ -19,6 +19,7 @@ TICC.py
 Runs an instance of TICC algorithm.
 
 **Parameters**
+
 lambda_parameter : the lambda regularization parameter as described in the paper
 
 beta : the beta parameter controlling the smoothness of the output as described in the paper
@@ -37,6 +38,7 @@ maxIters : maximum iteration of the TICC algorithm
 
 
 **Returns**
+
 saves a .csv file for each of the cluster inverse covariances
 
 saves a .csv file with list of the assignments for each of the timestamps to the 'k' clusters
@@ -51,6 +53,7 @@ car.py
 Runs an instance of TICC algorithm on the car example (case-study), as described in the paper. The parameters are the same as the TICC example.
 
 **Parameters**
+
 lambda_parameter : the lambda regularization parameter as described in the paper
 
 beta : the beta parameter controlling the smoothness of the output as described in the paper
@@ -68,6 +71,7 @@ input_file : Location of the data file of size T-by-n.
 maxIters : maximum iteration of the TICC algorithm
 
 **Returns**
+
 saves a .csv file for each of the cluster inverse covariances
 
 saves a .csv file with list of the assignments for each of the timestamps to the 'k' clusters
@@ -84,6 +88,7 @@ network_accuracy.py
 Runs an instance of TICC algorithm on the T-by-n data matrix as described in the paper. Used for generating the network accuracy table as shown in the paper. The parameters are the same as the TICC example.
 
 **Parameters**
+
 lambda_parameter : the lambda regularization parameter as described in the paper
 
 beta : the beta parameter controlling the smoothness of the output as described in the paper
@@ -101,6 +106,7 @@ input_file : Location of the data file of size T-by-n.
 maxIters : maximum iteration of the TICC algorithm
 
 **Returns**
+
 saves a .csv file for each of the cluster inverse covariances
 
 saves a .csv file with list of the assignments for each of the timestamps to the 'k' clusters
@@ -114,6 +120,7 @@ generate_synthetic_data.py
 Generates data using the methodology described in the paper. The data is generated from 'k' number of clusters. The 'T' time stamps are broken down into segments, and the segment lengths are the corresponding clusters should be mentioned in the 'break_points' array and 'seg_ids' list, respectively.
 
 **Parameters**
+
 window_size : the size of the sliding window
 
 number_of_sensors : The dimension 'n' of the output T-by-n data matrix.
@@ -134,6 +141,7 @@ saved as "Inverse Covaraince cluster = cluster#.csv"
 out_file_name : The file name where the .csv data matrix should be stored.
 
 **Returns**
+
 saves a .csv file with data matrix of shape T-by-n
 
 saves a .csv file for each of the inverse covariances of each cluster if the save_inverse_covariances flag is True.
@@ -145,6 +153,7 @@ scalability_test.py
 Runs an instance of the scalability test. Prints out the time required for each step: E-step (DP algorithm) and M-step (Optimization using Toeplitz Graphical Lasso).
 
 **Parameters**
+
 number_of_cluster: the number of clusters 'k' that the time stamps are clustered into
 
 window_size : the size of the sliding window
@@ -154,6 +163,7 @@ input_file : Location of the data file of size T-by-n.
 maxIters : maximum iteration of the TICC algorithm
 
 **Output**
+
 prints out the time taken for each of the steps in TICC algotihm. This function was used to generate the scalability plot in the paper.
 
 
