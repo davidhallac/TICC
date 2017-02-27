@@ -2,7 +2,7 @@
 TICC is a python solver for efficiently segmenting and clustering a multivariate time series. For implementation details refer to the paper. 
 
 ----
-The TICC method takes as input a T-by-n data matrix, a regularization parameter "lambda" and smoothness parameter "beta" and the nummber of clusters "k".  TICC breaks the T timestamps into segements where each segment belongs to one of the "k" clusters. The total number of segments is defined by the smoothness parameter "beta". It does so by running an EM algorithm where TICC alternately assigns points to clusters using a DP algorithm and then updates the cluster parameters using a Toeplitz Inverse Covariance Estimation problems. The details can be found in the paper.
+The TICC method takes as input a T-by-n data matrix, a regularization parameter "lambda" and smoothness parameter "beta", the window size "w" and the nummber of clusters "k".  TICC breaks the T timestamps into segements where each segment belongs to one of the "k" clusters. The total number of segments is defined by the smoothness parameter "beta". It does so by running an EM algorithm where TICC alternately assigns points to clusters using a DP algorithm and updates the cluster parameters by solving a Toeplitz Inverse Covariance Estimation problem. The details can be found in the paper.
 
 Download & Setup
 ======================
@@ -20,18 +20,27 @@ Runs an instance of TICC algorithm.
 
 **Parameters**
 lambda_parameter : the lambda regularization parameter as described in the paper
+
 beta : the beta parameter controlling the smoothness of the output as described in the paper
+
 number_of_cluster: the number of clusters 'k' that the time stamps are clustered into
+
 window_size : the size of the sliding window
+
 prefix_string : the location of the output files
+
 threhsold : used for generating the cross time plots. Not used in the TICC algorithm
+
 input_file : Location of the data file of size T-by-n.
+
 maxIters : maximum iteration of the TICC algorithm
 
 
 **Returns**
 saves a .csv file for each of the cluster inverse covariances
+
 saves a .csv file with list of the assignments for each of the timestamps to the 'k' clusters
+
 prints the binary accuracy, if the correct method for computing the confusion matrix is specified
 
 ----
@@ -43,18 +52,28 @@ Runs an instance of TICC algorithm on the car example (case-study), as described
 
 **Parameters**
 lambda_parameter : the lambda regularization parameter as described in the paper
+
 beta : the beta parameter controlling the smoothness of the output as described in the paper
+
 number_of_cluster: the number of clusters 'k' that the time stamps are clustered into
+
 window_size : the size of the sliding window
+
 prefix_string : the location of the output files
+
 threhsold : used for generating the cross time plots. Not used in the TICC algorithm
+
 input_file : Location of the data file of size T-by-n.
+
 maxIters : maximum iteration of the TICC algorithm
 
 **Returns**
 saves a .csv file for each of the cluster inverse covariances
+
 saves a .csv file with list of the assignments for each of the timestamps to the 'k' clusters
+
 saves a .csv file with the locations information
+
 saves a .csv file with the color information for each of the time stamps
 
 ----
@@ -66,17 +85,26 @@ Runs an instance of TICC algorithm on the T-by-n data matrix as described in the
 
 **Parameters**
 lambda_parameter : the lambda regularization parameter as described in the paper
+
 beta : the beta parameter controlling the smoothness of the output as described in the paper
+
 number_of_cluster: the number of clusters 'k' that the time stamps are clustered into
+
 window_size : the size of the sliding window
+
 prefix_string : the location of the output files
+
 threhsold : used for generating the cross time plots. Not used in the TICC algorithm
+
 input_file : Location of the data file of size T-by-n.
+
 maxIters : maximum iteration of the TICC algorithm
 
 **Returns**
 saves a .csv file for each of the cluster inverse covariances
+
 saves a .csv file with list of the assignments for each of the timestamps to the 'k' clusters
+
 prints the network F1 scores for each of the clusters, assuming the "true" networks are stored as specified in the file.
 
 ----
@@ -87,17 +115,27 @@ Generates data using the methodology described in the paper. The data is generat
 
 **Parameters**
 window_size : the size of the sliding window
+
 number_of_sensors : The dimension 'n' of the output T-by-n data matrix.
+
 sparsity_inv_matrix: sparsity of the MRF for each of the clusters. The sparsity of the inverse covariance matrix of each cluster.
+
 rand_seed : The random seed used for generating random numbers
+
 number_of_cluster: the number of clusters 'k' that the time stamps are generated from
+
 cluster_ids : The corresponding cluster ids from which the segments are generated.
+
 break_points : The end point of the segments. So length of segment 'i' = break_points[i+1] - break_points[i]
-save_inverse_covariances : Boolean. Flag indicating if the computed inverse covarainces for each of the clusters should be saved as "Inverse Covaraince cluster = cluster#.csv"
+
+save_inverse_covariances : Boolean. Flag indicating if the computed inverse covarainces for each of the clusters should be 
+saved as "Inverse Covaraince cluster = cluster#.csv"
+
 out_file_name : The file name where the .csv data matrix should be stored.
 
 **Returns**
 saves a .csv file with data matrix of shape T-by-n
+
 saves a .csv file for each of the inverse covariances of each cluster if the save_inverse_covariances flag is True.
 
 ----
@@ -108,11 +146,14 @@ Runs an instance of the scalability test. Prints out the time required for each 
 
 **Parameters**
 number_of_cluster: the number of clusters 'k' that the time stamps are clustered into
+
 window_size : the size of the sliding window
+
 input_file : Location of the data file of size T-by-n.
+
 maxIters : maximum iteration of the TICC algorithm
 
-**Returns**
+**Output**
 prints out the time taken for each of the steps in TICC algotihm. This function was used to generate the scalability plot in the paper.
 
 
