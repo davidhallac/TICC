@@ -171,21 +171,21 @@ prints out the time taken for each of the steps in TICC algotihm. This function 
 Example Usage
 ======================
 
-  1. Generating the data. In case, you already have a data matrix, skip this step. For generating the data as mentioned in the paper, use generate_synthetic_data.py. Change the parameters of break_points and seg_ids, to define the temporal pattern of your time series that you want to generate. Use the sparsity_inv_matrix to define the sparsity of the MRF of each cluster. ALso set window_size, number_of_sensors appropriately according to your application. Then run the following commmand:
+Generating the data. In case, you already have a data matrix, skip this step. For generating the data as mentioned in the paper, use generate_synthetic_data.py. Change the parameters of break_points and seg_ids, to define the temporal pattern of your time series that you want to generate. Use the sparsity_inv_matrix to define the sparsity of the MRF of each cluster. ALso set window_size, number_of_sensors appropriately according to your application. Then run the following commmand:
 
 ```
 python generate_synthetic_data.py
 ```
-  2. Next use the TICC.py file for running an instance of the TICC algorithm on the data matrix. The TICC.py method should be initialized with the following parameters : smoothness parameter 'beta', sparsity regularization 'lambda', window size, maximum Iterations before convergence, number of clusters, location of the input and output file. After updating this in the TICC.py file, run the following:
+Next use the TICC.py file for running an instance of the TICC algorithm on the data matrix. The TICC.py method should be initialized with the following parameters : smoothness parameter 'beta', sparsity regularization 'lambda', window size, maximum Iterations before convergence, number of clusters, location of the input and output file. After updating this in the TICC.py file, run the following:
   
 ```
 python TICC.py
 ```
-  3. For generating the network accuracy plots, use the Network.py file. Add the same parameters as above in the network_accuracy.py file and additionally save the true Inverse covariances as "Inverse Covaraince cluster = 'cluster#'.csv" in the same directory as the network_accuracy.py file. Next run:
+For generating the network accuracy plots, use the Network.py file. Add the same parameters as above in the network_accuracy.py file and additionally save the true Inverse covariances as "Inverse Covaraince cluster = 'cluster#'.csv" in the same directory as the network_accuracy.py file. Next run:
 ```
 python network_accuracy.py
 ```
-  4. For running a scalability experiment, use the scalability_test.py file. Set the parameters within the file same as the TICC.py file, and run the following command:
+For running a scalability experiment, use the scalability_test.py file. Set the parameters within the file same as the TICC.py file, and run the following command:
 ```
 python scalability_test.py
 ```
