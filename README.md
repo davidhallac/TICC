@@ -117,7 +117,7 @@ prints the network F1 scores for each of the clusters, assuming the "true" netwo
 ```
 generate_synthetic_data.py
 ```
-Generates data using the methodology described in the paper. The data is generated from 'k' number of clusters. The 'T' time stamps are broken down into segments, and the segment lengths are the corresponding clusters should be mentioned in the 'break_points' array and 'seg_ids' list, respectively.
+Generates data using the methodology described in the paper. The data is generated from 'k' number of clusters. The 'T' time stamps are broken down into segments, and the segment lengths of the corresponding clusters should be mentioned in the 'break_points' array and 'seg_ids' list, respectively. So length of segment 'i' = break_points[i+1] - break_points[i].
 
 **Parameters**
 
