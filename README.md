@@ -2,7 +2,7 @@
 TICC is a python solver for efficiently segmenting and clustering a multivariate time series. For implementation details refer to the paper. 
 
 ----
-The TICC method takes as input a T-by-n data matrix, a regularization parameter "lambda" and smoothness parameter "beta", the window size "w" and the nummber of clusters "k".  TICC breaks the T timestamps into segements where each segment belongs to one of the "k" clusters. The total number of segments is defined by the smoothness parameter "beta". It does so by running an EM algorithm where TICC alternately assigns points to clusters using a DP algorithm and updates the cluster parameters by solving a Toeplitz Inverse Covariance Estimation problem. The details can be found in the paper.
+The TICC method takes as input a T-by-n data matrix, a regularization parameter "lambda" and smoothness parameter "beta", the window size "w" and the number of clusters "k".  TICC breaks the T timestamps into segments where each segment belongs to one of the "k" clusters. The total number of segments is defined by the smoothness parameter "beta". It does so by running an EM algorithm where TICC alternately assigns points to clusters using a DP algorithm and updates the cluster parameters by solving a Toeplitz Inverse Covariance Estimation problem. The details can be found in the paper.
 
 Download & Setup
 ======================
@@ -64,7 +64,7 @@ window_size : the size of the sliding window
 
 prefix_string : the location of the output files
 
-threhsold : used for generating the cross time plots. Not used in the TICC algorithm
+threshold : used for generating the cross time plots. Not used in the TICC algorithm
 
 input_file : Location of the data file of size T-by-n.
 
@@ -135,8 +135,8 @@ cluster_ids : The corresponding cluster ids from which the segments are generate
 
 break_points : The end point of the segments. So length of segment 'i' = break_points[i+1] - break_points[i]
 
-save_inverse_covariances : Boolean. Flag indicating if the computed inverse covarainces for each of the clusters should be 
-saved as "Inverse Covaraince cluster = cluster#.csv"
+save_inverse_covariances : Boolean. Flag indicating if the computed inverse covariances for each of the clusters should be 
+saved as "Inverse Covariance cluster = cluster#.csv"
 
 out_file_name : The file name where the .csv data matrix should be stored.
 
@@ -164,14 +164,14 @@ maxIters : maximum iteration of the TICC algorithm
 
 **Output**
 
-prints out the time taken for each of the steps in TICC algotihm. This function was used to generate the scalability plot in the paper.
+prints out the time taken for each of the steps in TICC algorithm. This function was used to generate the scalability plot in the paper.
 
 
 
 Example Usage
 ======================
 
-Generating the data. In case, you already have a data matrix, skip this step. For generating the data as mentioned in the paper, use generate_synthetic_data.py. Change the parameters of break_points and seg_ids, to define the temporal pattern of your time series that you want to generate. Use the sparsity_inv_matrix to define the sparsity of the MRF of each cluster. ALso set window_size, number_of_sensors appropriately according to your application. Then run the following commmand:
+Generating the data. In case, you already have a data matrix, skip this step. For generating the data as mentioned in the paper, use generate_synthetic_data.py. Change the parameters of break_points and seg_ids, to define the temporal pattern of your time series that you want to generate. Use the sparsity_inv_matrix to define the sparsity of the MRF of each cluster. ALso set window_size, number_of_sensors appropriately according to your application. Then run the following command:
 
 ```
 python generate_synthetic_data.py
@@ -181,7 +181,7 @@ Next use the TICC.py file for running an instance of the TICC algorithm on the d
 ```
 python TICC.py
 ```
-For generating the network accuracy plots, use the Network.py file. Add the same parameters as above in the network_accuracy.py file and additionally save the true Inverse covariances as "Inverse Covaraince cluster = 'cluster#'.csv" in the same directory as the network_accuracy.py file. Next run:
+For generating the network accuracy plots, use the Network.py file. Add the same parameters as above in the network_accuracy.py file and additionally save the true Inverse covariances as "Inverse Covariance cluster = 'cluster#'.csv" in the same directory as the network_accuracy.py file. Next run:
 ```
 python network_accuracy.py
 ```
