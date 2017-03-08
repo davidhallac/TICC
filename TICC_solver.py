@@ -30,7 +30,7 @@ def TICC_function(window_size = 10,number_of_clusters = 5, lambda_parameter = 11
 	num_blocks = window_size + 1
 	switch_penalty = beta## smoothness penalty
 	lam_sparse = lambda_parameter##sparsity parameter
-	maxClusters = number_of_cluster+1## Number of clusters + 1
+	maxClusters = number_of_clusters + 1## Number of clusters + 1
 	num_stacked = num_blocks - 1
 	##colors used in hexadecimal format
 	hexadecimal_color_list = ["cc0000","0000ff","003300","33ff00","00ffcc","ffff00","ff9900","ff00ff","cccc66","666666","ffccff","660000","00ff00","ffffff","3399ff","006666","330000","ff0000","cc99ff","b0800f","3bd9eb","ef3e1b"]
