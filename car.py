@@ -20,7 +20,7 @@ maxIters = 2 ##number of Iterations of the smoothening + clustering algo
 beta = 400 ## Beta parameter
 lambda_parameter = 5e-3 ## Lambda regularization parameter
 number_of_clusters = 11
-threshold = 2e-5
+threshold = 2e-5##
 write_out_file = False ##Only if True are any files outputted
 scaling_time = 10
 prefix_string = "data_lambda=" + str(lambda_parameter)+"beta = "+str(beta) + "clusters=" +str(number_of_clusters)+"/"
