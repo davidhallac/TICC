@@ -42,7 +42,7 @@ prefix_string = "data_lambda=" + str(lambda_parameter)+"beta = "+str(beta) + "cl
 num_blocks = window_size + 1
 switch_penalty = beta## smoothness penalty
 lam_sparse = lambda_parameter##sparsity parameter
-maxClusters = number_of_cluster+1## Number of clusters + 1
+maxClusters = number_of_clusters+1## Number of clusters + 1
 write_out_file = False ##Only if True are any files outputted
 num_stacked = num_blocks - 1
 ##colors used in hexadecimal format
