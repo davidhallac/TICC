@@ -1199,7 +1199,7 @@ def ADMM_u(entry):
 ################################################################################################################################################################################################################################################################################
 
 
-def TICC_function(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, beta = 400, maxIters = 1000, threshold = 2e-5, write_out_file = False, input_file = None, prefix_string = ""):
+def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, beta = 400, maxIters = 1000, threshold = 2e-5, write_out_file = False, input_file = None, prefix_string = ""):
 
 	seg_len = 300##segment-length : used in confusion matrix computation
 
