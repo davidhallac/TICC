@@ -20,11 +20,12 @@ def upper2Full(a, eps = 0):
 
 numBlocks = 3
 sizeBlocks = 2
+probSize = numBlocks*sizeBlocks
 lamb = 0.1*np.zeros((probSize,probSize))
 S = 0
 
 
-probSize = numBlocks*sizeBlocks
+
 
 
 np.random.seed(0)

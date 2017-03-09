@@ -1052,35 +1052,25 @@ def ADMM_z(entry, index_penalty = 1):
                         points[l] = a_ij[index]
                         lamSum = lamSum + lamb[loc1,loc2]
                     #Calculate soft threshold
-                    #If answer is 0
-                    obj0 = 0
-                    for point in points:
-                        obj0 = obj0 + rho/2*(point*point)
 
                     #If answer is positive
                     ansPos = max((rho*numpy.sum(points) - lamSum)/(rho*elems),0)
-                    objPos = lamSum*ansPos
-                    for point in points:
-                        objPos = objPos + rho/2*(ansPos - point)*(ansPos - point)                    
 
                     #If answer is negative
                     ansNeg = min((rho*numpy.sum(points) + lamSum)/(rho*elems),0)
-                    objNeg = lamSum*ansNeg
-                    for point in points:
-                        objNeg = objPos + rho/2*(ansNeg - point)*(ansNeg - point)                    
 
-                    if (obj0 < objPos and obj0 < objNeg):
-                        for locs in locList:
-                            index = ij2symmetric(locs[0], locs[1], probSize)
-                            z_ij[index] = 0
-                    elif(objPos < objNeg):
+                    if (rho*numpy.sum(points) > lamSum):
                         for locs in locList:
                             index = ij2symmetric(locs[0], locs[1], probSize)
                             z_ij[index] = ansPos
-                    else:
+                    elif(rho*numpy.sum(points) < -1*lamSum):
                         for locs in locList:
                             index = ij2symmetric(locs[0], locs[1], probSize)
                             z_ij[index] = ansNeg
+                    else:
+                        for locs in locList:
+                            index = ij2symmetric(locs[0], locs[1], probSize)
+                            z_ij[index] = 0
 
         else:
             #Non-A block
@@ -1100,43 +1090,25 @@ def ADMM_z(entry, index_penalty = 1):
 
 
                     #Calculate soft threshold
-                    #If answer is 0
-                    obj0 = 0
-                    for point in points:
-                        obj0 = obj0 + rho/2*(point*point)
-
                     #If answer is positive
                     ansPos = max((rho*numpy.sum(points) - lamSum)/(rho*elems),0)
-                    objPos = lamSum*ansPos
-                    for point in points:
-                        objPos = objPos + rho/2*(ansPos - point)*(ansPos - point)                    
 
                     #If answer is negative
                     ansNeg = min((rho*numpy.sum(points) + lamSum)/(rho*elems),0)
-                    objNeg = lamSum*ansNeg
-                    for point in points:
-                        objNeg = objNeg + rho/2*(ansNeg - point)*(ansNeg - point)                    
 
-                    if (obj0 < objPos and obj0 < objNeg):
-                        for locs in locList:
-                            index = ij2symmetric(locs[0], locs[1], probSize)
-                            z_ij[index] = 0
-                        # print "Chose Obj = 0", i, j, k
-                    elif(objPos < objNeg):
+                    if (rho*numpy.sum(points) > lamSum):
                         for locs in locList:
                             index = ij2symmetric(locs[0], locs[1], probSize)
                             z_ij[index] = ansPos
-                        # print "Chose Obj = ", ansPos, i, j, k
-                    else:
+                    elif(rho*numpy.sum(points) < -1*lamSum):
                         for locs in locList:
                             index = ij2symmetric(locs[0], locs[1], probSize)
                             z_ij[index] = ansNeg
-                        # print "Chose Obj = ", ansNeg, i, j, k
+                    else:
+                        for locs in locList:
+                            index = ij2symmetric(locs[0], locs[1], probSize)
+                            z_ij[index] = 0
 
-                    # for locs in locList:
-                    #     index = ij2symmetric(locs[0], locs[1], probSize)
-                    #     print i, j,k, index                            
-                    # print obj0, objPos, objNeg, ansPos, ansNeg
 
     # print upper2Full(a_ij), "= alternative"
     # print upper2Full(z_ij), "= z_ij"
