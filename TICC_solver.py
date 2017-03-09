@@ -1031,9 +1031,7 @@ def ADMM_x(entry):
         solution = numpy.array(x_update).T.reshape(-1)
 
         writeValue(node_vals, entry[X_IND] + variables[0][3], solution, variables[0][2].size[0]) 
-        # print solution, "= solution"
     else:
-        # print 'we are in the dummy node'
         x_update = [] # no variable to update for dummy node
     return None
 
@@ -1062,7 +1060,7 @@ def ADMM_z(entry, index_penalty = 1):
     z_ij = numpy.zeros(probSize*(probSize+1)/2)
     for i in range(numBlocks):
         if (i == 0):
-            #In the A block (slightly different)
+            #In the A^{(0)} block (the blocks on the diagonal)
             for j in range(sizeBlocks):
                 for k in range(j, sizeBlocks):
                     elems = numBlocks
@@ -1096,7 +1094,7 @@ def ADMM_z(entry, index_penalty = 1):
                             z_ij[index] = 0
 
         else:
-            #Non-A block
+            #Off-diagonal blocks
             for j in range(sizeBlocks):
                 for k in range(sizeBlocks):
 
