@@ -165,6 +165,7 @@ maxIters : maximum iteration of the TICC algorithm
 **Output**
 
 prints out the time taken for each of the steps in TICC algorithm. This function was used to generate the scalability plot in the paper.
+
 ----
 ```
 TICC_solver.py
@@ -197,6 +198,7 @@ saved as "Inverse Covariance cluster = cluster#.csv"
 returns an array of cluster assignments for each time point.
 
 returns a dictionary with keys being the cluster_id (from 0 to k-1) and the values being the cluster MRFs.
+
 ----
 
 Example Usage
