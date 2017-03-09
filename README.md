@@ -165,8 +165,39 @@ maxIters : maximum iteration of the TICC algorithm
 **Output**
 
 prints out the time taken for each of the steps in TICC algorithm. This function was used to generate the scalability plot in the paper.
+----
+```
+TICC_solver.py
+```
+Solver for the TICC algorithm. Contains all the important functions. The solve function within the file can run an instance of the TICC algorithm. The details of the solve function are as below:
 
+**Parameters**
 
+window_size : the size of the sliding window
+
+maxIters : the maximum iterations of the TICC algorithm before covnergence. Default value is 100.
+
+lambda_parameter: sparsity of the MRF for each of the clusters. The sparsity of the inverse covariance matrix of each cluster.
+
+beta: The switching penalty used in the TICC algorithm. Same as the beta parameter described in the paper. 
+
+number_of_clusters: the number of clusters 'k' that the time stamps are generated from
+
+threshold: the threshold parameter used in visualization. Not a part of the TICC algorithm.
+
+input_file: Location of the Data matrix of size T-by-n.
+
+prefix_string: Location of the folder to which you want to save the outputs.
+
+write_out_file : Boolean. Flag indicating if the computed inverse covariances for each of the clusters should be 
+saved as "Inverse Covariance cluster = cluster#.csv"
+
+**Returns**
+
+returns an array of cluster assignments for each time point.
+
+returns a dictionary with keys being the cluster_id (from 0 to k-1) and the values being the cluster MRFs.
+----
 
 Example Usage
 ======================
@@ -189,7 +220,14 @@ For running a scalability experiment, use the scalability_test.py file. Set the 
 ```
 python scalability_test.py
 ```
-  
+
+For using the solver, on your data , the usage is as shown below. Enter the parameters as mentioned in the paper. Use the output cluster_assignments and the dictioanry of the cluster_MRFs, as needed in the application.
+```
+import TICC_solver as TICC
+(cluster_assignment, cluster_MRFs) = TICC.solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, beta = 400, maxIters = 100, threshold = 2e-5, write_out_file = False, input_file = "data.csv", prefix_string = "output_folder/"):
+```
+
+
 References
 ==========
 (Add the reference to the paper.)
