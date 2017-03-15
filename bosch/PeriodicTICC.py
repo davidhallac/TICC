@@ -94,7 +94,7 @@ col_names = ['Operating_status:_Flame','Number_of_burner_starts','Operating_stat
 
 
 
-# ###PROCESSING FOR BOSCH DATA
+# ###PROCESSING FOR boiler DATA
 # dfOrig = pd.read_csv('2029717969629609985.csv', parse_dates=[['Date','Time']], delimiter='\t')#,nrows=99999)
 # dfOrig2 = dfOrig[col_names]
 # dfOrig2['Date_Time'] = pd.to_datetime(dfOrig2['Date_Time'],format='%d.%m.%Y %H:%M:%S',  coerce = True)
@@ -124,7 +124,7 @@ col_names = ['Operating_status:_Flame','Number_of_burner_starts','Operating_stat
 
 # Data = np.array(newDf)
 max_lim = 200000
-Data = np.loadtxt("cleaned_bosch_data.csv", delimiter = ",")
+Data = np.loadtxt("cleaned_boiler_data.csv", delimiter = ",")
 Data = Data[:max_lim,:]
 file = open("time_Stamps2.txt","r")
 out = file.read()
@@ -668,7 +668,7 @@ for cluster in clustered_points:
 	points_colored.append(color_list[int(cluster)])
 
 ##Working with the computed cluster assignments 
-# time_stamps = list(np.loadtxt('cleaned_bosch_timestamps.csv', delimiter = ","))
+# time_stamps = list(np.loadtxt('cleaned_boiler_timestamps.csv', delimiter = ","))
 startTime = time_stamps[0]
 graph1 = time.time()
 len_plot = min(len(time_stamps), len(clustered_points))
