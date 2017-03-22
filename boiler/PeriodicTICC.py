@@ -135,6 +135,7 @@ time_stamps = time_stamps[:max_lim]
 print "completed getting data"
 print "data shape", Data.shape
 print "time stamps ", time_stamps[1]
+print "\n\n"
 
 # UNNORMALIZED_Data = np.array(out2.iloc[65:,:])
 # out2 = out2.iloc[30:,:10]
@@ -209,7 +210,7 @@ def updateClusters(LLE_node_vals,switch_penalty = 1):
 		total_vals[int(path[i])] -= switch_penalty
 
 		path[i+1] = np.argmin(total_vals)
-
+	####################################################
 	start_period = time.time()
 	##add the periodic constraints to the smoothened path
 	## max_iterations, period_a , period_b
@@ -226,20 +227,24 @@ def updateClusters(LLE_node_vals,switch_penalty = 1):
 			points.append(point - 1)
 
 			##take all the valid "neighbor" points
-			final_idx = []
-			for idx in points:
-				if idx < len(path) and idx >= 0:
-					final_idx.append(idx)
+			final_idx = points
+
+			if point < max(period_a, period_b) or point > len(path) - max(period_b,period_a):
+				final_idx = []
+				for idx in points:
+					if idx < len(path) and idx >= 0:
+						final_idx.append(idx)
+
 			##get the clusters of these points
 			clusters = [path[idx] for idx in final_idx]
 
 			##base lle if the point was in that idx
 			lle_base = LLE_node_vals[point,:]
 			for cluster in clusters:
-				lle_base[int(cluster)] += switch_penalty
+				lle_base[int(cluster)] -= switch_penalty
 
 			#get the cluster of the max lle val
-			cluster_out = np.argmax(lle_base)
+			cluster_out = np.argmin(lle_base)
 			path[point] = cluster_out
 		if np.array_equal(path, old_path):
 			print "Converged !! BReaking Early of periodic viterbi"
@@ -293,8 +298,8 @@ def computeF1Score(num_cluster,matching_algo,actual_clusters,threshold_algo,save
 				else:
 					FN += 1.0
 		precision = (TP)/(TP + FP)
-		print "cluster #", cluster
-		print "TP,TN,FP,FN---------->", (TP,TN,FP,FN)
+		# print "cluster #", cluster
+		# print "TP,TN,FP,FN---------->", (TP,TN,FP,FN)
 		recall = TP/(TP + FN)
 		f1 = (2*precision*recall)/(precision + recall)
 		F1_score[cluster] = f1
@@ -362,7 +367,7 @@ for iters in xrange(maxIters):
 		training_idx = np.random.choice(m-num_stacked+1, size=m-num_stacked+1,replace = False )
 		sorted_training_idx = sorted(training_idx)
 		test_idx = []
-		print "total length is:", m, "length of training is:", len(training_idx)
+		# print "total length is:", m, "length of training is:", len(training_idx)
 		##compute the test indices
 		##Stack the complete data
 		complete_Data = np.zeros([m - num_stacked + 1, num_stacked*n])
@@ -384,7 +389,7 @@ for iters in xrange(maxIters):
 		# 			idx_k = sorted_training_idx[i+k]
 		# 			complete_D_train[i][k*n:(k+1)*n] =  Data[idx_k][0:n]
 		complete_D_train = complete_Data
-		print "complete D_train shape:", complete_D_train.shape
+		# print "complete D_train shape:", complete_D_train.shape
 		##Stack the test data
 
 
@@ -392,7 +397,7 @@ for iters in xrange(maxIters):
 		gmm = mixture.GaussianMixture(n_components=num_clusters, covariance_type="full")
 		gmm.fit(complete_D_train)
 		clustered_points = gmm.predict(complete_D_train)
-		print "clustered_points length", len(clustered_points)
+		# print "clustered_points length", len(clustered_points)
 		gmm_clustered_pts = clustered_points + 0
 
 		gmm_covariances = gmm.covariances_
@@ -428,9 +433,9 @@ for iters in xrange(maxIters):
 				else:
 					str0 += ","
 					counter += 1
-		print "FINALLY CLUSTERED #points",i, "counter is:", counter
+		# print "FINALLY CLUSTERED #points",i, "counter is:", counter
 		location_file = open((str_NULL + "location_info_lam_sparse="+ str(lam_sparse)+"threshold="+str(threshold)+"maxClusters="+str(maxClusters)+".txt"),"w")
-		location_file.write(str0)
+		# location_file.write(str0)
 		location_file.close()
 
 	##Get the train and test points
@@ -438,7 +443,7 @@ for iters in xrange(maxIters):
 	len_train_clusters = collections.defaultdict(int)
 
 	counter = 0
-	print "length of training idx", len(training_idx)
+	# print "length of training idx", len(training_idx)
 	for point in range(len(clustered_points)):
 		cluster = clustered_points[point]
 		train_clusters[cluster].append(point)
@@ -466,9 +471,9 @@ for iters in xrange(maxIters):
 				point = indices[i]
 				D_train[i,:] = complete_D_train[point,:]
 
-			print "DONE!!!"
+			# print "DONE!!!"
 			##Fit a model - OPTIMIZATION	
-			print "shape of the Data is:", D_train.shape
+			# print "shape of the Data is:", D_train.shape
 #			solver_model = sklearn.covariance.GraphLasso(alpha = lam_sparse)
 #			solver_model.fit(D_train)
 #			cov_out = solver_model.covariance_
@@ -503,11 +508,11 @@ for iters in xrange(maxIters):
 			cov_out = np.linalg.inv(X2)
 
 			inv_matrix = cov_out
-			print "percent norm of the difference between the two is ------------------->", np.linalg.norm(cov_out - gmm_covariances[cluster])/np.linalg.norm(gmm_covariances[cluster])
-			print "percent norm of the difference with the inverse ------------------->", np.linalg.norm(S - gmm_covariances[cluster])/np.linalg.norm(gmm_covariances[cluster])
+			# print "percent norm of the difference between the two is ------------------->", np.linalg.norm(cov_out - gmm_covariances[cluster])/np.linalg.norm(gmm_covariances[cluster])
+			# print "percent norm of the difference with the inverse ------------------->", np.linalg.norm(S - gmm_covariances[cluster])/np.linalg.norm(gmm_covariances[cluster])
 
-			print "norm of the actual covariance matrix is -------------------->", np.linalg.norm(cov_out)
-			print "lod det value is -------------------> :", np.log(np.linalg.det(cov_out))
+			# print "norm of the actual covariance matrix is -------------------->", np.linalg.norm(cov_out)
+			# print "lod det value is -------------------> :", np.log(np.linalg.det(cov_out))
 
 			##Store the log-det, covariance, inverse-covariance, cluster means, stacked means
 			log_det_values[num_clusters, cluster] = np.log(np.linalg.det(cov_out))
@@ -553,7 +558,7 @@ for iters in xrange(maxIters):
 
 	old_train_clusters = train_clusters
 	old_computed_covariance = computed_covariance
-	print "UPDATED THE OLD COVARIANCE"
+	# print "UPDATED THE OLD COVARIANCE"
 
 	inv_cov_dict = {}
 	log_det_dict = {}
@@ -587,15 +592,15 @@ for iters in xrange(maxIters):
 	print "E step took:", time.time() - E_time
 	##Update cluster points - using NEW smoothening
 	clustered_points = updateClusters(LLE_all_points_clusters,switch_penalty = switch_penalty)
-	print "number of 0    ",np.sum([(x == 1) for x in clustered_points])
-	print "number of 1    ",np.sum([(x == 0) for x in clustered_points])
+	# print "number of 0    ",np.sum([(x == 1) for x in clustered_points])
+	# print "number of 1    ",np.sum([(x == 0) for x in clustered_points])
 
-print "length of the clustered points is:", len(clustered_points)
-print "length of sorted_training_idx", len(sorted_training_idx)
+# print "length of the clustered points is:", len(clustered_points)
+# print "length of sorted_training_idx", len(sorted_training_idx)
 plt.figure()
 plt.scatter(sorted_training_idx[0:len(clustered_points)],clustered_points,color = "r",marker = ".",s =2)
 plt.ylim((-0.5,num_clusters + 0.5))
-plt.savefig("TRAINING_EM_NEW_lam_sparse="+str(lam_sparse) + ".jpg")
+# plt.savefig(str_NULL + "TRAINING_EM_NEW_lam_sparse="+str(lam_sparse) + ".jpg")
 plt.close("all")
 
 ##Write the location and the appropriate color file
@@ -604,8 +609,8 @@ file_name = str_NULL + "color_file_EM.txt"
 color_list_file = open(file_name,"w")
 str0 = ""
 counter = 0
-print "length of gmm_clustered_pts", len(gmm_clustered_pts)
-print "length of clustered_points", len(clustered_points)
+# print "length of gmm_clustered_pts", len(gmm_clustered_pts)
+# print "length of clustered_points", len(clustered_points)
 for i in xrange(len(gmm_clustered_pts)):
 	if i % scaling_time == 0 and (i <40000 or i<5000) and clustered_points[i] == 4:
 		cluster = clustered_points[i]
@@ -616,8 +621,8 @@ for i in xrange(len(gmm_clustered_pts)):
 		else:
 			str0 += ","
 			counter += 1
-print "NUMBER OF POINTS IS---------->:", counter
-print "length of clustered points", len(gmm_clustered_pts)
+# print "NUMBER OF POINTS IS---------->:", counter
+# print "length of clustered points", len(gmm_clustered_pts)
 color_list_file.write(str0)
 color_list_file.close()
 
@@ -634,10 +639,10 @@ for i in xrange(len(gmm_clustered_pts)):
 		else:
 			str0 += ","
 			counter += 1
-print "NUMBER OF POINTS IS---------->:", counter
-print "length of sorted training data", len(sorted_training_idx)
+# print "NUMBER OF POINTS IS---------->:", counter
+# print "length of sorted training data", len(sorted_training_idx)
 location_file = open((str_NULL + "EM location file lam_sparse="+ str(lam_sparse)+"switch_penalty = " + str(switch_penalty) +"maxClusters="+str(maxClusters)+".txt"),"w")
-location_file.write(str0)
+# location_file.write(str0)
 location_file.close()
 
 
@@ -774,6 +779,8 @@ print "done with graph7"
 
 
 
+##Save stuff for analyzing
+np.savetxt(str_NULL + "clustered_points_lam_sparse = " + str(lam_sparse) + " switch_penalty=" + str(switch_penalty) + " clusters=" + str(num_clusters) +".csv", clustered_points,delimiter = ",")
 
 
 print "\n\n\nTHRESHOLD IS:", threshold
