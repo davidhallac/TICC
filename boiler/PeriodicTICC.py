@@ -487,7 +487,7 @@ for iters in xrange(maxIters):
 					lambda_block = np.zeros([size_blocks,size_blocks]) + scale*lam_sparse
 					lamb[block_i*size_blocks:(block_i+1)*size_blocks, (block_j*size_blocks):(block_j+1)*size_blocks] += lambda_block
 			S = np.cov(np.transpose(D_train) )
-			print lamb
+			# print lamb
 			#COPY THIS CODE
 			gvx = SCT.TGraphVX()
 			theta = SCT.semidefinite(probSize,name='theta')
