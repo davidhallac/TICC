@@ -1193,7 +1193,7 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
 	######### Get Date into proper format
 	print "completed getting the data"
 
-	Data = np.loadtxt("Synthetic Data Matrix rand_seed =[0,1] generated2.csv", delimiter= ",")
+	Data = np.loadtxt(input_file, delimiter= ",")
 	Data_pre = Data
 	UNNORMALIZED_Data = Data*1000
 	(m,n) = Data.shape
