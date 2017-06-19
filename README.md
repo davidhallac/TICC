@@ -232,4 +232,4 @@ import TICC_solver as TICC
 
 References
 ==========
-(Add the reference to the paper.)
+[1] TICC paper : http://stanford.edu/~hallac/TICC.pdf
