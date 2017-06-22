@@ -4,7 +4,7 @@ import time, collections, os, errno, sys
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from Visualization_function import visualize
+# from Visualization_function import visualize
 from solveCrossTime import *
 from scipy import stats
 
