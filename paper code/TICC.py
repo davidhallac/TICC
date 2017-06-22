@@ -20,9 +20,9 @@ np.random.seed(102)
 #####################PARAMETERS TO PLAY WITH 
 window_size = 10
 maxIters = 100 ##number of Iterations of the smoothening + clustering algo
-beta = 400 ## Beta parameter
+beta = 5 ## Beta parameter
 lambda_parameter = 11e-2 ## Lambda regularization parameter
-number_of_clusters = 3
+number_of_clusters = 2
 threshold = 2e-5##Threshold for plots. Not used in TICC algorithm.
 write_out_file = False ##Only if True are any files outputted
 seg_len = 300##segment-length : used in confusion matrix computation
