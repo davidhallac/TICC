@@ -50,7 +50,7 @@ prints the binary accuracy, if the correct method for computing the confusion ma
 ```
 car.py
 ```
-Runs an instance of TICC algorithm on the car example (case-study), as described in the paper. The parameters are the same as the TICC example.
+Runs an instance of TICC algorithm on the car example (case-study), as described in the paper. The parameters are the same as the TICC example. Note: this file is specifically useful for the car-example, doing some special input data handling for the car dataset. For running an instance of the TICC algorithm please use TICC.py or TICC_solver.py.
 
 **Parameters**
 
