@@ -42,7 +42,7 @@ prefix_string = "data_lambda=" + str(lambda_parameter)+"beta = "+str(beta) + "cl
 num_blocks = window_size + 1
 switch_penalty = beta## smoothness penalty
 lam_sparse = lambda_parameter##sparsity parameter
-maxClusters = number_of_cluster+1## Number of clusters + 1
+maxClusters = number_of_clusters+1## Number of clusters + 1
 write_out_file = False ##Only if True are any files outputted
 num_stacked = num_blocks - 1
 ##colors used in hexadecimal format
@@ -179,7 +179,7 @@ def compute_confusion_matrix(num_clusters,clustered_points_algo, sorted_indices_
 	seg_len = 200
 	true_confusion_matrix = np.zeros([num_clusters,num_clusters])
 	for point in xrange(len(clustered_points_algo)):
-		cluster = clustered_points_algo[point]
+		cluster = int(clustered_points_algo[point])
 
 
 		##CASE G: ABBACCCA

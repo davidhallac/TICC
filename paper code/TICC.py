@@ -179,7 +179,7 @@ def compute_confusion_matrix(num_clusters,clustered_points_algo, sorted_indices_
 	seg_len = 200
 	true_confusion_matrix = np.zeros([num_clusters,num_clusters])
 	for point in xrange(len(clustered_points_algo)):
-		cluster = clustered_points_algo[point]
+		cluster = int(clustered_points_algo[point])
 
 
 		##CASE G: ABBACCCA
