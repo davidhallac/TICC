@@ -1332,7 +1332,7 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
 
 			#CASE E : ABCABC
 			num = (int(sorted_indices_algo[point]/seg_len) %num_clusters)
-			true_confusion_matrix[num,cluster] += 1
+			true_confusion_matrix[int(num),int(cluster)] += 1
 
 			##CASE D : ABABABAB
 			# num = (int(sorted_indices_algo[point]/seg_len) %2)
