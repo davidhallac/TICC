@@ -1,25 +1,27 @@
+import numpy as np
+import __builtin__ as bt
 def getTrainTestSplit(m, num_blocks, num_stacked):
-'''
+	'''
 	- m: number of observations
 	- num_blocks: window_size + 1
 	- num_stacked: window_size
 	Returns:
 	- sorted list of training indices
-'''
+	'''
 	# Now splitting up stuff 
-    # split1 : Training and Test
-    # split2 : Training and Test - different clusters
-    training_percent = 1
-    # list of training indices
-    training_idx = np.random.choice(m-num_blocks+1, size=int((m-num_stacked)*training_percent),replace = False )
-    # Ensure that the first and the last few points are in
-    training_idx = list(training_idx)
-    if 0 not in training_idx:
-        training_idx.append(0)
-    if m - num_stacked  not in training_idx:
-        training_idx.append(m-num_stacked)
-    training_idx = np.array(training_idx)
-    return sorted(training_idx)
+	# split1 : Training and Test
+	# split2 : Training and Test - different clusters
+	training_percent = 1
+	# list of training indices
+	training_idx = np.random.choice(m-num_blocks+1, size=int((m-num_stacked)*training_percent),replace = False )
+	# Ensure that the first and the last few points are in
+	training_idx = list(training_idx)
+	if 0 not in training_idx:
+		training_idx.append(0)
+	if m - num_stacked  not in training_idx:
+		training_idx.append(m-num_stacked)
+	training_idx = np.array(training_idx)
+	return sorted(training_idx)
 
 def upperToFull(a, eps = 0):
 	    ind = (a<eps)&(a>-eps)
