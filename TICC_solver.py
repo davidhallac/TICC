@@ -13,8 +13,8 @@ from sklearn import mixture, covariance
 from sklearn.cluster import KMeans
 import pandas as pd
 
-from src.graphvx import TGraphVX
 from src.TICC_helper import *
+from src.admm_solver import ADMMSolver
 #######################################################################################################################################################################
 pd.set_option('display.max_columns', 500)
 np.set_printoptions(formatter={'float': lambda x: "{0:0.4f}".format(x)})
@@ -121,17 +121,11 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
                 lamb = np.zeros((probSize,probSize)) + lam_sparse
                 S = np.cov(np.transpose(D_train) )
 
-                gvx = TGraphVX()
-                theta = semidefinite(probSize,name='theta')
-                obj = -log_det(theta) + trace(S*theta)
-                gvx.AddNode(0, obj)
-                gvx.AddNode(1)
-                dummy = Variable(1)
-                gvx.AddEdge(0,1, Objective = lamb*dummy + num_stacked*dummy + size_blocks*dummy)
-                gvx.Solve(Verbose=False, MaxIters=1000, Rho = 1, EpsAbs = 1e-6, EpsRel = 1e-6)
+                rho = 1
+                solver = ADMMSolver(lamb, num_stacked, size_blocks, 1, S)
+                val = solver.SolveADMM(1000, 1e-6, 1e-6, False)
 
                 #THIS IS THE SOLUTION
-                val = gvx.GetNodeValue(0,'theta')
                 S_est = upperToFull(val, 0)
                 X2 = S_est
                 u, _ = np.linalg.eig(S_est)
