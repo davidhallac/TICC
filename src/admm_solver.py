@@ -100,7 +100,8 @@ class ADMMSolver:
         stop = (res_pri <= e_pri) and (res_dual <= e_dual)
         return (stop, res_pri, e_pri, res_dual, e_dual)
 
-    def SolveADMM(self, maxIters, eps_abs, eps_rel, verbose):
+    #solve
+    def __call__(self, maxIters, eps_abs, eps_rel, verbose):
         num_iterations = 0
         self.status = 'Incomplete: max iterations reached'
         for i in range(maxIters):
