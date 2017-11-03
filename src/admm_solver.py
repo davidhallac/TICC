@@ -1,11 +1,11 @@
 import numpy
-
+import math
 class ADMMSolver:
     def __init__(self, lamb, num_stacked, size_blocks, rho, S, rho_update_func=None):
         self.lamb = lamb
-        self.num_stacked = num_stacked
-        self.size_blocks = size_blocks
-        probsize = num_stacked*size_blocks
+        self.numBlocks = num_stacked
+        self.sizeBlocks = size_blocks
+        probSize = num_stacked*size_blocks
         self.length = probSize*(probSize+1)/2
         self.x = numpy.zeros(self.length)
         self.z = numpy.zeros(self.length)
@@ -15,7 +15,18 @@ class ADMMSolver:
         self.status = 'initialized'
         self.rho_update_func = rho_update_func
 
-    def Prox_logdet(S, A, eta):
+    def ij2symmetric(self, i,j,size):
+        return (size * (size + 1))/2 - (size-i)*((size - i + 1))/2 + j - i
+
+    def upper2Full(self, a):
+        n = int((-1  + numpy.sqrt(1+ 8*a.shape[0]))/2)  
+        A = numpy.zeros([n,n])
+        A[numpy.triu_indices(n)] = a 
+        temp = A.diagonal()
+        A = (A + A.T) - numpy.diag(temp)             
+        return A 
+
+    def Prox_logdet(self, S, A, eta):
         d, q = numpy.linalg.eigh(eta*A-S)
         q = numpy.matrix(q)
         X_var = ( 1/(2*float(eta)) )*q*( numpy.diag(d + numpy.sqrt(numpy.square(d) + (4*eta)*numpy.ones(d.shape))) )*q.T
@@ -24,9 +35,9 @@ class ADMMSolver:
 
     def ADMM_x(self):    
         a = self.z-self.u
-        A = upper2Full(a)
+        A = self.upper2Full(a)
         eta = 1/self.rho
-        x_update = Prox_logdet(self.S, A, eta)
+        x_update = self.Prox_logdet(self.S, A, eta)
         self.x = numpy.array(x_update).T.reshape(-1)
 
     def ADMM_z(self, index_penalty = 1):
@@ -35,13 +46,13 @@ class ADMMSolver:
         z_update = numpy.zeros(self.length)
 
         # TODO: can we parallelize these?
-        for i in range(numBlocks):
-            elems = numBlocks if i==0 else (2*numBlocks - 2*i)/2 # i=0 is diagonal
+        for i in range(self.numBlocks):
+            elems = self.numBlocks if i==0 else (2*self.numBlocks - 2*i)/2 # i=0 is diagonal
             for j in range(self.sizeBlocks):
                 for k in range(j, self.sizeBlocks):
-                    locList = [((l+i)*sizeBlocks + j, l*sizeBlocks+k) for l in range(elems)]
+                    locList = [((l+i)*self.sizeBlocks + j, l*self.sizeBlocks+k) for l in range(elems)]
                     lamSum = sum(self.lamb[loc1, loc2] for (loc1, loc2) in locList)
-                    indices = [ij2symmetric(loc1, loc2, probSize) for (loc1, loc2) in locList]
+                    indices = [self.ij2symmetric(loc1, loc2, probSize) for (loc1, loc2) in locList]
                     pointSum = sum(a[index] for index in indices)
                     rhoPointSum = self.rho * pointSum
 
@@ -91,7 +102,6 @@ class ADMMSolver:
 
     def SolveADMM(self, maxIters, eps_abs, eps_rel, verbose):
         num_iterations = 0
-        z_old = getValue(edge_z_vals, 0, z_length)
         self.status = 'Incomplete: max iterations reached'
         for i in range(maxIters):
             z_old = numpy.copy(self.z)
@@ -104,10 +114,10 @@ class ADMMSolver:
                     self.status = 'Optimal'
                     break
                 new_rho = self.rho
-                if rho_update_func:
+                if self.rho_update_func:
                     new_rho = rho_update_func(self.rho, res_pri, e_pri, res_dual, e_dual)
-                scale = self.rho / rho_new
-                rho = rho_new
+                scale = self.rho / new_rho
+                rho = new_rho
                 self.u = scale*self.u
 
             if verbose:
