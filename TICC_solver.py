@@ -13,6 +13,8 @@ from sklearn import mixture, covariance
 from sklearn.cluster import KMeans
 import pandas as pd
 
+from multiprocessing import Pool
+
 from src.TICC_helper import *
 from src.admm_solver import ADMMSolver
 #######################################################################################################################################################################
@@ -22,7 +24,7 @@ np.random.seed(102)
 
 #####################################################################################################################################################################################################
 
-def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, beta = 400, maxIters = 1000, threshold = 2e-5, write_out_file = False, input_file = None, prefix_string = ""):
+def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, beta = 400, maxIters = 1000, threshold = 2e-5, write_out_file = False, input_file = None, prefix_string = "", num_proc = 1):
     '''
     Main method for TICC solver.
     Parameters:
@@ -95,16 +97,19 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
     old_clustered_points = None # points from last iteration
 
     # PERFORM TRAINING ITERATIONS
+    pool=Pool(processes=num_proc)
     for iters in xrange(maxIters):
         print "\n\n\nITERATION ###", iters
         ##Get the train and test points
         train_clusters = collections.defaultdict(list) # {cluster: [point indices]}
         for point, cluster in enumerate(clustered_points):
             train_clusters[cluster].append(point)
-        len_train_clusters = {k: len(train_clusters[k]) for k in train_clusters}
+
+        len_train_clusters = {k: len(train_clusters[k]) for k in xrange(num_clusters)}
 
         # train_clusters holds the indices in complete_D_train 
         # for each of the clusters
+        optRes = [None for i in xrange(num_clusters)]
         for cluster in xrange(num_clusters):
             cluster_length = len_train_clusters[cluster]
             if cluster_length != 0:
@@ -123,20 +128,27 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
 
                 rho = 1
                 solver = ADMMSolver(lamb, num_stacked, size_blocks, 1, S)
-                val = solver.SolveADMM(1000, 1e-6, 1e-6, False)
+                def admmSolveHelper(admm_solver):
+                    return admm_solver.SolveADMM(1000, 1e-6, 1e-6, False)
+                # apply to process pool
+                optRes[cluster] = pool.apply_async(admmSolveHelper, (solver,))
 
-                #THIS IS THE SOLUTION
-                S_est = upperToFull(val, 0)
-                X2 = S_est
-                u, _ = np.linalg.eig(S_est)
-                cov_out = np.linalg.inv(X2)
+        for cluster in xrange(num_clusters):
+            if optRes[i] == None:
+                continue
+            val = optRes[i].get()
+            #THIS IS THE SOLUTION
+            S_est = upperToFull(val, 0)
+            X2 = S_est
+            # u, _ = np.linalg.eig(S_est)
+            cov_out = np.linalg.inv(X2)
 
-                # Store the log-det, covariance, inverse-covariance, cluster means, stacked means
-                log_det_values[num_clusters, cluster] = np.log(np.linalg.det(cov_out))
-                computed_covariance[num_clusters,cluster] = cov_out
-                cluster_mean_info[num_clusters,cluster] = np.mean(D_train, axis = 0)[(num_stacked-1)*n:num_stacked*n].reshape([1,n])
-                cluster_mean_stacked_info[num_clusters,cluster] = np.mean(D_train,axis=0)
-                train_cluster_inverse[cluster] = X2
+            # Store the log-det, covariance, inverse-covariance, cluster means, stacked means
+            log_det_values[num_clusters, cluster] = np.log(np.linalg.det(cov_out))
+            computed_covariance[num_clusters,cluster] = cov_out
+            cluster_mean_info[num_clusters,cluster] = np.mean(D_train, axis = 0)[(num_stacked-1)*n:num_stacked*n].reshape([1,n])
+            cluster_mean_stacked_info[num_clusters,cluster] = np.mean(D_train,axis=0)
+            train_cluster_inverse[cluster] = X2
 
         for cluster in xrange(num_clusters):
             print "length of the cluster ", cluster,"------>", len_train_clusters[cluster]
