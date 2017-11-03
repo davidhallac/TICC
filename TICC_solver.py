@@ -119,8 +119,9 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
                 for i in xrange(cluster_length):
                     point = indices[i]
                     D_train[i,:] = complete_D_train[point,:]
-
-                print "OPTIMIZATION for Cluster #", cluster,"DONE!!!"
+                
+                cluster_mean_info[num_clusters,cluster] = np.mean(D_train, axis = 0)[(num_stacked-1)*n:num_stacked*n].reshape([1,n])
+                cluster_mean_stacked_info[num_clusters,cluster] = np.mean(D_train,axis=0)
                 ##Fit a model - OPTIMIZATION    
                 probSize = num_stacked * size_blocks
                 lamb = np.zeros((probSize,probSize)) + lam_sparse
@@ -128,26 +129,27 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
 
                 rho = 1
                 solver = ADMMSolver(lamb, num_stacked, size_blocks, 1, S)
-                def admmSolveHelper(admm_solver):
-                    return admm_solver.SolveADMM(1000, 1e-6, 1e-6, False)
+                #def admmSolveHelper(admm_solver):
+                    #return admm_solver.SolveADMM(1000, 1e-6, 1e-6, False)
                 # apply to process pool
-                optRes[cluster] = pool.apply_async(admmSolveHelper, (solver,))
+                optRes[cluster] = pool.apply_async(solver, (1000, 1e-6, 1e-6, False,))
 
         for cluster in xrange(num_clusters):
-            if optRes[i] == None:
+            if optRes[cluster] == None:
                 continue
-            val = optRes[i].get()
+            val = optRes[cluster].get()
+            print "OPTIMIZATION for Cluster #", cluster,"DONE!!!"
             #THIS IS THE SOLUTION
             S_est = upperToFull(val, 0)
             X2 = S_est
-            # u, _ = np.linalg.eig(S_est)
+            u, _ = np.linalg.eig(S_est)
             cov_out = np.linalg.inv(X2)
 
             # Store the log-det, covariance, inverse-covariance, cluster means, stacked means
             log_det_values[num_clusters, cluster] = np.log(np.linalg.det(cov_out))
             computed_covariance[num_clusters,cluster] = cov_out
-            cluster_mean_info[num_clusters,cluster] = np.mean(D_train, axis = 0)[(num_stacked-1)*n:num_stacked*n].reshape([1,n])
-            cluster_mean_stacked_info[num_clusters,cluster] = np.mean(D_train,axis=0)
+            #cluster_mean_info[num_clusters,cluster] = np.mean(D_train, axis = 0)[(num_stacked-1)*n:num_stacked*n].reshape([1,n])
+            #cluster_mean_stacked_info[num_clusters,cluster] = np.mean(D_train,axis=0)
             train_cluster_inverse[cluster] = X2
 
         for cluster in xrange(num_clusters):
