@@ -44,7 +44,7 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
     switch_penalty = beta # smoothness penalty
     lam_sparse = lambda_parameter # sparsity parameter
     num_clusters = number_of_clusters # Number of clusters
-
+    cluster_reassignment = 3 # number of points to reassign to a 0 cluster
     print "lam_sparse", lam_sparse
     print "switch_penalty", switch_penalty
     print "num_cluster", num_clusters
@@ -129,8 +129,6 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
 
                 rho = 1
                 solver = ADMMSolver(lamb, num_stacked, size_blocks, 1, S)
-                #def admmSolveHelper(admm_solver):
-                    #return admm_solver.SolveADMM(1000, 1e-6, 1e-6, False)
                 # apply to process pool
                 optRes[cluster] = pool.apply_async(solver, (1000, 1e-6, 1e-6, False,))
 
@@ -148,8 +146,6 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
             # Store the log-det, covariance, inverse-covariance, cluster means, stacked means
             log_det_values[num_clusters, cluster] = np.log(np.linalg.det(cov_out))
             computed_covariance[num_clusters,cluster] = cov_out
-            #cluster_mean_info[num_clusters,cluster] = np.mean(D_train, axis = 0)[(num_stacked-1)*n:num_stacked*n].reshape([1,n])
-            #cluster_mean_stacked_info[num_clusters,cluster] = np.mean(D_train,axis=0)
             train_cluster_inverse[cluster] = X2
 
         for cluster in xrange(num_clusters):
@@ -157,10 +153,9 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
 
         # Computing the norms
         if iters != 0:
-            cluster_norms = [np.linalg.norm(old_computed_covariance[num_clusters,i]) for i in xrange(num_clusters)]
-            for cluster in xrange(num_clusters):
-                cluster_norms[cluster] = (np.linalg.norm(old_computed_covariance[num_clusters,cluster]),cluster)
+            cluster_norms = [(np.linalg.norm(old_computed_covariance[num_clusters,i]), i) for i in xrange(num_clusters)]
             norms_sorted = sorted(cluster_norms,reverse = True)
+            # clusters that are not 0 as sorted by norm
             valid_clusters = [cp[1] for cp in norms_sorted if len_train_clusters[cp[1]] != 0]
 
             # Add a point to the empty clusters 
@@ -168,14 +163,19 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
             counter = 0
             for cluster in xrange(num_clusters):
                 if len_train_clusters[cluster] == 0:
-                    cluster_selected = valid_clusters[counter]
+                    cluster_selected = valid_clusters[counter] # a cluster that is not len 0
                     counter = (counter+1) % len(valid_clusters)
                     print "cluster that is zero is:", cluster, "selected cluster instead is:", cluster_selected
-                    point_num = random.choice(train_clusters[cluster_selected])
-                    clustered_points[point_num] = cluster
-                    computed_covariance[num_clusters,cluster] = old_computed_covariance[num_clusters,cluster_selected]
-                    cluster_mean_stacked_info[num_clusters,cluster] = complete_D_train[point_num,:]
-                    cluster_mean_info[num_clusters,cluster] = complete_D_train[point,:][(num_stacked-1)*n:num_stacked*n]
+                    start_point = random.choice(train_clusters[cluster_selected]) # random point number from that cluster
+                    for i in range(0, cluster_reassignment):
+                        # put cluster_reassignment points from point_num in this cluster
+                        point_to_move = start_point + i
+                        if point_to_move >= len(clustered_points):
+                            break
+                        clustered_points[point_to_move] = cluster
+                        computed_covariance[num_clusters,cluster] = old_computed_covariance[num_clusters,cluster_selected]
+                        cluster_mean_stacked_info[num_clusters,cluster] = complete_D_train[point_to_move,:]
+                        cluster_mean_info[num_clusters,cluster] = complete_D_train[point_to_move,:][(num_stacked-1)*n:num_stacked*n]
         # update old computed covariance
         old_computed_covariance = computed_covariance
         print "UPDATED THE OLD COVARIANCE"
