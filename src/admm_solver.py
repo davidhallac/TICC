@@ -6,7 +6,7 @@ class ADMMSolver:
         self.numBlocks = num_stacked
         self.sizeBlocks = size_blocks
         probSize = num_stacked*size_blocks
-        self.length = probSize*(probSize+1)/2
+        self.length = int(probSize*(probSize+1)/2)
         self.x = numpy.zeros(self.length)
         self.z = numpy.zeros(self.length)
         self.u = numpy.zeros(self.length)
@@ -52,7 +52,7 @@ class ADMMSolver:
                 for k in range(j, self.sizeBlocks):
                     locList = [((l+i)*self.sizeBlocks + j, l*self.sizeBlocks+k) for l in range(elems)]
                     lamSum = sum(self.lamb[loc1, loc2] for (loc1, loc2) in locList)
-                    indices = [self.ij2symmetric(loc1, loc2, probSize) for (loc1, loc2) in locList]
+                    indices = [int(self.ij2symmetric(loc1, loc2, probSize)) for (loc1, loc2) in locList]
                     pointSum = sum(a[index] for index in indices)
                     rhoPointSum = self.rho * pointSum
 
@@ -92,11 +92,11 @@ class ADMMSolver:
         res_pri = norm(r)
         res_dual = norm(s)
         if verbose:
-            # Debugging information to print convergence criteria values
-            print '  r:', res_pri
-            print '  e_pri:', e_pri
-            print '  s:', res_dual
-            print '  e_dual:', e_dual
+            # Debugging information to print(convergence criteria values)
+            print('  r:', res_pri)
+            print('  e_pri:', e_pri)
+            print('  s:', res_dual)
+            print('  e_dual:', e_dual)
         stop = (res_pri <= e_pri) and (res_dual <= e_dual)
         return (stop, res_pri, e_pri, res_dual, e_dual)
 
@@ -120,8 +120,7 @@ class ADMMSolver:
                 scale = self.rho / new_rho
                 rho = new_rho
                 self.u = scale*self.u
-
             if verbose:
                 # Debugging information prints current iteration #
-                print 'Iteration %d' % i
+                print('Iteration %d' % i)
         return self.x

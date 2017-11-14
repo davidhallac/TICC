@@ -1,6 +1,6 @@
 import numpy as np 
 import math, time, collections, os, errno, sys, code, random
-import __builtin__ as bt
+import builtins as bt
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -45,15 +45,15 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
     lam_sparse = lambda_parameter # sparsity parameter
     num_clusters = number_of_clusters # Number of clusters
     cluster_reassignment = 20 # number of points to reassign to a 0 cluster
-    print "lam_sparse", lam_sparse
-    print "switch_penalty", switch_penalty
-    print "num_cluster", num_clusters
-    print "num stacked", num_stacked
+    print("lam_sparse", lam_sparse)
+    print("switch_penalty", switch_penalty)
+    print("num_cluster", num_clusters)
+    print("num stacked", num_stacked)
 
     ######### Get Data into proper format
     Data = np.loadtxt(input_file, delimiter= ",") 
     (m,n) = Data.shape # m: num of observations, n: size of observation vector
-    print "completed getting the data"
+    print("completed getting the data")
 
     ############
     ##The basic folder to be created
@@ -72,8 +72,8 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
     num_test_points = m - num_train_points
     ##Stack the training data
     complete_D_train = np.zeros([num_train_points, num_stacked*n])
-    for i in xrange(num_train_points):
-        for k in xrange(num_stacked):
+    for i in range(num_train_points):
+        for k in range(num_stacked):
             if i+k < num_train_points:
                 idx_k = training_indices[i+k]
                 complete_D_train[i][k*n:(k+1)*n] =  Data[idx_k][0:n]
@@ -98,25 +98,26 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
 
     # PERFORM TRAINING ITERATIONS
     pool=Pool(processes=num_proc)
-    for iters in xrange(maxIters):
-        print "\n\n\nITERATION ###", iters
+    for iters in range(maxIters):
+        print("\n\n\nITERATION ###", iters)
         ##Get the train and test points
         train_clusters = collections.defaultdict(list) # {cluster: [point indices]}
         for point, cluster in enumerate(clustered_points):
             train_clusters[cluster].append(point)
 
-        len_train_clusters = {k: len(train_clusters[k]) for k in xrange(num_clusters)}
+        len_train_clusters = {k: len(train_clusters[k]) for k in range(num_clusters)}
 
         # train_clusters holds the indices in complete_D_train 
         # for each of the clusters
-        optRes = [None for i in xrange(num_clusters)]
-        for cluster in xrange(num_clusters):
+        optRes = [None for i in range(num_clusters)]
+        clusterValues = []
+        for cluster in range(num_clusters):
             cluster_length = len_train_clusters[cluster]
             if cluster_length != 0:
                 size_blocks = n
                 indices = train_clusters[cluster]
                 D_train = np.zeros([cluster_length,num_stacked*n])
-                for i in xrange(cluster_length):
+                for i in range(cluster_length):
                     point = indices[i]
                     D_train[i,:] = complete_D_train[point,:]
                 
@@ -129,14 +130,17 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
 
                 rho = 1
                 solver = ADMMSolver(lamb, num_stacked, size_blocks, 1, S)
+                clusterValues.append(solver(1000, 1e-6, 1e-6, False))
+                print(cluster)
+                # assert False
                 # apply to process pool
-                optRes[cluster] = pool.apply_async(solver, (1000, 1e-6, 1e-6, False,))
-
-        for cluster in xrange(num_clusters):
+                # optRes[cluster] = pool.apply_async(solver, (1000, 1e-6, 1e-6, False,))
+        assert False
+        for cluster in range(num_clusters):
             if optRes[cluster] == None:
                 continue
             val = optRes[cluster].get()
-            print "OPTIMIZATION for Cluster #", cluster,"DONE!!!"
+            print("OPTIMIZATION for Cluster #", cluster,"DONE!!!")
             #THIS IS THE SOLUTION
             S_est = upperToFull(val, 0)
             X2 = S_est
@@ -148,16 +152,16 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
             computed_covariance[num_clusters,cluster] = cov_out
             train_cluster_inverse[cluster] = X2
 
-        for cluster in xrange(num_clusters):
-            print "length of the cluster ", cluster,"------>", len_train_clusters[cluster]
+        for cluster in range(num_clusters):
+            print("length of the cluster ", cluster,"------>", len_train_clusters[cluster])
 
         # update old computed covariance
         old_computed_covariance = computed_covariance
-        print "UPDATED THE OLD COVARIANCE"
+        print("UPDATED THE OLD COVARIANCE")
 
         inv_cov_dict = {} # cluster to inv_cov
         log_det_dict = {} # cluster to log_det
-        for cluster in xrange(num_clusters):
+        for cluster in range(num_clusters):
             cov_matrix = computed_covariance[num_clusters,cluster][0:(num_blocks-1)*n,0:(num_blocks-1)*n]
             inv_cov_matrix = np.linalg.inv(cov_matrix)
             log_det_cov = np.log(np.linalg.det(cov_matrix))# log(det(sigma2|1))
@@ -166,12 +170,12 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
 
         # -----------------------SMOOTHENING
         # For each point compute the LLE 
-        print "beginning the smoothening ALGORITHM"
+        print("beginning the smoothening ALGORITHM")
 
         LLE_all_points_clusters = np.zeros([bt.len(clustered_points),num_clusters])
-        for point in xrange(bt.len(clustered_points)):
+        for point in range(bt.len(clustered_points)):
             if point + num_stacked-1 < complete_D_train.shape[0]:
-                for cluster in xrange(num_clusters):
+                for cluster in range(num_clusters):
                     cluster_mean = cluster_mean_info[num_clusters,cluster] 
                     cluster_mean_stacked = cluster_mean_stacked_info[num_clusters,cluster] 
                     x = complete_D_train[point,:] - cluster_mean_stacked[0:(num_blocks-1)*n]
@@ -184,7 +188,7 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
         clustered_points = updateClusters(LLE_all_points_clusters,switch_penalty = switch_penalty)
 
         if iters != 0:
-            cluster_norms = [(np.linalg.norm(old_computed_covariance[num_clusters,i]), i) for i in xrange(num_clusters)]
+            cluster_norms = [(np.linalg.norm(old_computed_covariance[num_clusters,i]), i) for i in range(num_clusters)]
             norms_sorted = sorted(cluster_norms,reverse = True)
             # clusters that are not 0 as sorted by norm
             valid_clusters = [cp[1] for cp in norms_sorted if len_train_clusters[cp[1]] != 0]
@@ -192,11 +196,11 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
             # Add a point to the empty clusters 
             # assuming more non empty clusters than empty ones
             counter = 0
-            for cluster in xrange(num_clusters):
+            for cluster in range(num_clusters):
                 if len_train_clusters[cluster] == 0:
                     cluster_selected = valid_clusters[counter] # a cluster that is not len 0
                     counter = (counter+1) % len(valid_clusters)
-                    print "cluster that is zero is:", cluster, "selected cluster instead is:", cluster_selected
+                    print("cluster that is zero is:", cluster, "selected cluster instead is:", cluster_selected)
                     start_point = random.choice(train_clusters[cluster_selected]) # random point number from that cluster
                     for i in range(0, cluster_reassignment):
                         # put cluster_reassignment points from point_num in this cluster
@@ -209,8 +213,8 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
                         cluster_mean_info[num_clusters,cluster] = complete_D_train[point_to_move,:][(num_stacked-1)*n:num_stacked*n]
         
 
-        for cluster in xrange(num_clusters):
-            print "length of cluster #", cluster, "-------->", sum([x== cluster for x in clustered_points])
+        for cluster in range(num_clusters):
+            print("length of cluster #", cluster, "-------->", sum([x== cluster for x in clustered_points]))
 
         ##Save a figure of segmentation
         plt.figure()
@@ -218,7 +222,7 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
         plt.ylim((-0.5,num_clusters + 0.5))
         if write_out_file: plt.savefig(str_NULL + "TRAINING_EM_lam_sparse="+str(lam_sparse) + "switch_penalty = " + str(switch_penalty) + ".jpg")
         plt.close("all")
-        print "Done writing the figure"
+        print("Done writing the figure")
 
         true_confusion_matrix = compute_confusion_matrix(num_clusters,clustered_points,training_indices)
 
@@ -238,7 +242,7 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
         correct_EM = 0
         correct_GMM = 0
         correct_KMeans = 0
-        for cluster in xrange(num_clusters):
+        for cluster in range(num_clusters):
             matched_cluster_EM = matching_EM[cluster]
             matched_cluster_GMM = matching_GMM[cluster]
             matched_cluster_Kmeans = matching_Kmeans[cluster]
@@ -255,10 +259,10 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
         f1_GMM_tr = -1#computeF1_macro(train_confusion_matrix_GMM,matching_GMM,num_clusters)
         f1_kmeans_tr = -1#computeF1_macro(train_confusion_matrix_kmeans,matching_Kmeans,num_clusters)
 
-        print "\n\n\n"
+        print("\n\n\n")
 
         if np.array_equal(old_clustered_points,clustered_points):
-            print "\n\n\n\nCONVERGED!!! BREAKING EARLY!!!"
+            print("\n\n\n\nCONVERGED!!! BREAKING EARLY!!!")
             break
         old_clustered_points = clustered_points
         # end of training
@@ -271,13 +275,13 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
     f1_GMM_tr = -1#computeF1_macro(train_confusion_matrix_GMM,matching_GMM,num_clusters)
     f1_kmeans_tr = -1#computeF1_macro(train_confusion_matrix_kmeans,matching_Kmeans,num_clusters)
 
-    print "\n\n"
-    print "TRAINING F1 score:", f1_EM_tr, f1_GMM_tr, f1_kmeans_tr
+    print("\n\n")
+    print("TRAINING F1 score:", f1_EM_tr, f1_GMM_tr, f1_kmeans_tr)
 
     correct_EM = 0
     correct_GMM = 0
     correct_KMeans = 0
-    for cluster in xrange(num_clusters):
+    for cluster in range(num_clusters):
         matched_cluster_EM = matching_EM[cluster]
         matched_cluster_GMM = matching_GMM[cluster]
         matched_cluster_Kmeans = matching_Kmeans[cluster]
