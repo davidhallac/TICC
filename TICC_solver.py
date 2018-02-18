@@ -5,8 +5,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from cvxpy import *
-# from solveCrossTime import *
 from scipy import stats
 
 from sklearn import mixture, covariance
