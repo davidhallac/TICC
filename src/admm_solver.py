@@ -49,10 +49,15 @@ class ADMMSolver:
         for i in range(self.numBlocks):
             elems = self.numBlocks if i==0 else (2*self.numBlocks - 2*i)/2 # i=0 is diagonal
             for j in range(self.sizeBlocks):
-                for k in range(j, self.sizeBlocks):
+                startPoint = j if i==0 else 0
+                for k in range(startPoint, self.sizeBlocks):
                     locList = [((l+i)*self.sizeBlocks + j, l*self.sizeBlocks+k) for l in range(elems)]
-                    lamSum = sum(self.lamb[loc1, loc2] for (loc1, loc2) in locList)
-                    indices = [self.ij2symmetric(loc1, loc2, probSize) for (loc1, loc2) in locList]
+                    if i == 0:
+                        lamSum = sum(self.lamb[loc1, loc2] for (loc1, loc2) in locList)
+                        indices = [self.ij2symmetric(loc1, loc2, probSize) for (loc1, loc2) in locList]
+                    else:
+                        lamSum = sum(self.lamb[loc2, loc1] for (loc1, loc2) in locList)
+                        indices = [self.ij2symmetric(loc2, loc1, probSize) for (loc1, loc2) in locList]
                     pointSum = sum(a[index] for index in indices)
                     rhoPointSum = self.rho * pointSum
 
