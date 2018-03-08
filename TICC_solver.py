@@ -130,11 +130,11 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
                 solver = ADMMSolver(lamb, num_stacked, size_blocks, 1, S)
                 clusterValues.append(solver(1000, 1e-6, 1e-6, False))
                 print(cluster)
-                # assert False
                 # apply to process pool
-                # optRes[cluster] = pool.apply_async(solver, (1000, 1e-6, 1e-6, False,))
-        assert False
-        for cluster in range(num_clusters):
+                optRes[cluster] = pool.apply_async(solver, (1000, 1e-6, 1e-6, False,))
+
+
+        for cluster in xrange(num_clusters):
             if optRes[cluster] == None:
                 continue
             val = optRes[cluster].get()
@@ -198,8 +198,13 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
                 if len_train_clusters[cluster] == 0:
                     cluster_selected = valid_clusters[counter] # a cluster that is not len 0
                     counter = (counter+1) % len(valid_clusters)
+<<<<<<< HEAD
                     print("cluster that is zero is:", cluster, "selected cluster instead is:", cluster_selected)
                     start_point = random.choice(train_clusters[cluster_selected]) # random point number from that cluster
+=======
+                    print "cluster that is zero is:", cluster, "selected cluster instead is:", cluster_selected
+                    start_point = np.random.choice(train_clusters[cluster_selected]) # random point number from that cluster
+>>>>>>> upstream/master
                     for i in range(0, cluster_reassignment):
                         # put cluster_reassignment points from point_num in this cluster
                         point_to_move = start_point + i
