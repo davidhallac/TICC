@@ -297,8 +297,8 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     #########################################################
     ##DONE WITH EVERYTHING 
     if compute_BIC:
-        bic = computeBIC(num_clusters, m, train_cluster_inverse, empirical_covariances)
-        return (clustered_points, train_cluster_inverse, bic)
+        cluster_bic, beta_bic = computeBIC(num_clusters, m, clustered_points,train_cluster_inverse, empirical_covariances)
+        return (clustered_points, train_cluster_inverse, cluster_bic, beta_bic)
     return (clustered_points, train_cluster_inverse)
 
 #######################################################################################################################################################################

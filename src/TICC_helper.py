@@ -170,7 +170,7 @@ def computeF1_macro(confusion_matrix,matching, num_clusters):
  	F1_score /= num_clusters
  	return F1_score
 
-def computeBIC(K, T, inverse_covariances, empirical_covariances):
+def computeBIC(K, T, clustered_points, inverse_covariances, empirical_covariances):
 	'''
 	empirical covariance and inverse_covariance should be dicts
 	K is num clusters
@@ -180,7 +180,13 @@ def computeBIC(K, T, inverse_covariances, empirical_covariances):
 	non_zero_params = 0
 	threshold = 2e-5
 	for cluster, clusterInverse in inverse_covariances.iteritems():
-        mod_lle += np.log(np.linalg.det(clusterInverse)) - np.trace(empirical_covariances[cluster], clusterInverse)
+		mod_lle += np.log(np.linalg.det(clusterInverse)) - np.trace(np.dot(empirical_covariances[cluster], clusterInverse))
 		non_zero_params += np.sum(np.abs(clusterInverse) > threshold)
 	avg_ll = mod_lle/float(K)
-	return nonzero_params * np.log(T) - 2*avg_ll
+	non_zero_beta_params = 0
+	curr_val = -1
+	for val in clustered_points:
+		if val != curr_val:
+			curr_val = val
+			non_zero_beta_params += 1.0
+	return non_zero_params * np.log(T) - 2*avg_ll,  non_zero_beta_params * np.log(T) - 2*avg_ll
