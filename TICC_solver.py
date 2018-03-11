@@ -24,7 +24,7 @@ np.random.seed(102)
 
 def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     beta=400, maxIters=1000, threshold=2e-5, write_out_file=False,
-    input_file=None, prefix_string="", num_proc=1, compute_BIC=False):
+    input_data=None, prefix_string="", num_proc=1, compute_BIC=False):
     '''
     Main method for TICC solver.
     Parameters:
@@ -51,7 +51,8 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     print "num stacked", num_stacked
 
     ######### Get Data into proper format
-    Data = np.loadtxt(input_file, delimiter= ",") 
+    Data = input_data
+    # Data = np.loadtxt(input_file, delimiter= ",") 
     (m,n) = Data.shape # m: num of observations, n: size of observation vector
     print "completed getting the data"
 
