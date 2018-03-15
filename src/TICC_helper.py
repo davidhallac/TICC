@@ -177,16 +177,16 @@ def computeBIC(K, T, clustered_points, inverse_covariances, empirical_covariance
 	T is num samples
 	'''
 	mod_lle = 0
-	non_zero_params = 0
+	
 	threshold = 2e-5
+	clusterParams = {}
 	for cluster, clusterInverse in inverse_covariances.iteritems():
 		mod_lle += np.log(np.linalg.det(clusterInverse)) - np.trace(np.dot(empirical_covariances[cluster], clusterInverse))
-		non_zero_params += np.sum(np.abs(clusterInverse) > threshold)
-	avg_ll = mod_lle/float(K)
-	non_zero_beta_params = 0
+		clusterParams[cluster] = np.sum(np.abs(clusterInverse) > threshold)
 	curr_val = -1
+	non_zero_params = 0
 	for val in clustered_points:
 		if val != curr_val:
+			non_zero_params += clusterParams[val]
 			curr_val = val
-			non_zero_beta_params += 1.0
-	return non_zero_params * np.log(T) - 2*avg_ll,  non_zero_beta_params * np.log(T) - 2*avg_ll
+	return non_zero_params * np.log(T) - 2*mod_lle
