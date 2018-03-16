@@ -27,7 +27,7 @@ np.random.seed(102)
 def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     beta=400, maxIters=1000, threshold=2e-5, write_out_file=False,
     input_data=None, prefix_string="", compute_BIC=False,
-    logging_level=logging.INFO):
+    logging_level=logging.INFO, num_processes=1):
     '''
     Main method for TICC solver.
     Parameters:
@@ -42,8 +42,6 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         - input_file: location of the data file
     '''
     logging.basicConfig(level=logging_level)
-    assert global_vars.GlobalPool is not None
-    assert global_vars.PoolLock is not None
     assert maxIters > 0 # must have at least one iteration
     num_blocks = window_size + 1
     num_stacked = window_size
@@ -102,6 +100,10 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
 
     empirical_covariances = {}
 
+    pool = None
+    if num_processes > 1:
+        pool = Pool(processes=num_processes)
+
     # PERFORM TRAINING ITERATIONS
     for iters in xrange(maxIters):
         logging.info("\n\n\nITERATION ### %s" % iters)
@@ -114,7 +116,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
 
         # train_clusters holds the indices in complete_D_train 
         # for each of the clusters
-        optRes = [None for i in xrange(num_clusters)]
+        optRes = [None for i in xrange(num_clusters)] # actual results if only one process
         for cluster in xrange(num_clusters):
             cluster_length = len_train_clusters[cluster]
             if cluster_length != 0:
@@ -136,14 +138,17 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
                 rho = 1
                 solver = ADMMSolver(lamb, num_stacked, size_blocks, 1, S)
                 # apply to process pool
-                global_vars.PoolLock.acquire()
-                optRes[cluster] = global_vars.GlobalPool.apply_async(solver, (1000, 1e-6, 1e-6, False,))
-                global_vars.PoolLock.release()
+                if pool is not None:
+                    optRes[cluster] = pool.apply_async(solver, (1000, 1e-6, 1e-6, False,))
+                else:
+                    optRes[cluster] = solver(1000, 1e-6, 1e-6, False)
 
         for cluster in xrange(num_clusters):
             if optRes[cluster] == None:
                 continue
-            val = optRes[cluster].get()
+            val = optRes[cluster]
+            if pool is not None:
+                val = optRes[cluster].get() # val is actually a future
             logging.debug("OPTIMIZATION for Cluster %s DONE!!!" % cluster)
             #THIS IS THE SOLUTION
             S_est = upperToFull(val, 0)

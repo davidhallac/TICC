@@ -9,7 +9,6 @@ import concurrent.futures as cf
 import threading
 from multiprocessing import Pool
 
-import global_vars
 # Problem Instance. Contains fields for problem except for the BIC
 # changeable ones.
 ProblemInstance = namedtuple('ProblemInstance',
@@ -17,7 +16,7 @@ ProblemInstance = namedtuple('ProblemInstance',
 
 
 def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), process_pool_size=1,
-            thread_pool_size=1, window_size=1, lambda_param=11e-2, beta=[50, 100, 200, 400],
+            window_size=1, lambda_param=11e-2, beta=[50, 100, 200, 400],
             maxIters=1000, threshold=2e-5, covariance_filename=None,
             input_format='matrix', delimiter=',', BIC_Iters=None, input_dimensions=None,
             logging_level=logging.INFO):
@@ -53,8 +52,6 @@ def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), proces
     -- delimiter is the data file delimiter
     '''
     logging.basicConfig(level=logging_level)
-    global_vars.GlobalPool = Pool(processes=process_pool_size)
-
     input_data = None
     if input_format == 'graph':
         input_data = retrieveInputGraphData(
@@ -81,8 +78,7 @@ def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), proces
     problem_instance = ProblemInstance(input_data=input_data, window_size=window_size,
                                        maxIters=BIC_Iters, threshold=threshold)
     params, results, score = runHyperParameterTuning(beta, lambda_param, cluster_number,
-                                                     process_pool_size, problem_instance,
-                                                     thread_pool_size)
+                                                     process_pool_size, problem_instance)
     beta, cluster_number, lambda_param = params
     print "Via BIC with score %s, using params beta: %s, clusterNum %s, lambda %s" % (
         score, beta, cluster_number, lambda_param)
@@ -95,7 +91,7 @@ def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), proces
         (cluster_assignment, cluster_MRFs) = solve(
             window_size=window_size, number_of_clusters=cluster_number, lambda_parameter=lambda_param,
             beta=beta, maxIters=maxIters, threshold=threshold,
-            input_data=input_data, pool=pool, pool_lock=poolLock, logging_level=logging_level)
+            input_data=input_data, num_processes=process_pool_size, logging_level=logging_level)
 
     np.savetxt(output_filename, cluster_assignment, fmt='%d', delimiter=',')
 
@@ -144,58 +140,38 @@ def retrieveInputGraphData(input_filename, input_dimensions, delim=','):
                     cols.append(j)
         mat = csr_matrix((data, (rows, cols)),
                          shape=(len(sparse_cols), lenRow))
-        solver = TruncatedSVD(n_components=MAX_FEATURES)
+        solver = TruncatedSVD(n_components=input_dimensions)
         return solver.fit_transform(mat)
 
 
 def runHyperParameterTuning(beta_vals, lambda_vals, cluster_vals,
-                            process_pool_size, problem_instance, thread_pool_size):
+                            process_pool_size, problem_instance):
     num_runs = len(beta_vals)*len(lambda_vals)*len(cluster_vals)
 
-    # use a threadpool since daemons can't have kids. This is a bit slower
-    # because of the GIL but ticc solve creates processes that do the real
-    # work anyway
-    # pool = Pool(processes=pool_size)
-    processes_per, extra_processes = dividPoolSizes(
-        process_pool_size, num_runs)
-
-    with cf.ThreadPoolExecutor(max_workers=thread_pool_size) as executor:
-        futures = [None]*num_runs
-        futureIndex = 0
-        for l in lambda_vals:
-            for c in cluster_vals:
-                for b in beta_vals:
-                    futures[futureIndex] = executor.submit(runBIC, b, c, l, problem_instance)
-                    futureIndex += 1
-        # retrieve results
-        bestParams = (0, 0, 0)  # beta, cluster, lambda
-        bestResults = (None, None)
-        bestScore = None
-        for future in cf.as_completed(futures):
-            clusts, mrfs, score, params = future.result()
-            if bestScore is None or score > bestScore:
-                bestScore = score
-                bestParams = params
-                bestResults = (clusts, mrfs)
+    pool = Pool(processes=process_pool_size)
+    futures = [None]*num_runs
+    futureIndex = 0
+    for l in lambda_vals:
+        for c in cluster_vals:
+            for b in beta_vals:
+                futures[futureIndex] = pool.apply_async(runBIC, (b, c, l, problem_instance,))
+                futureIndex += 1
+    # retrieve results
+    bestParams = (0, 0, 0)  # beta, cluster, lambda
+    bestResults = (None, None)
+    bestScore = None
+    for future in futures:
+        clusts, mrfs, score, params = future.get()
+        if bestScore is None or score > bestScore:
+            bestScore = score
+            bestParams = params
+            bestResults = (clusts, mrfs)
     return bestParams, bestResults, bestScore
-
-
-def dividPoolSizes(process_pool_size, num_runs):
-    # allocate processes per so that in total we don't go over the process pool size
-    # don't count threads in pool (since they'll be waiting on the indiv pool threads
-    # anyway)
-    # at least one process per job
-    processes_per = max(1, process_pool_size/num_runs)
-    processes_used = processes_per*num_runs
-    # any extra processes left over
-    extra_processes = max(0, process_pool_size - processes_used)
-    return processes_per, extra_processes
-
 
 def runBIC(beta, cluster, lambd, pi):
     ''' pi should be a problem instance '''
     clusts, mrfs, score = solve(input_data=pi.input_data, window_size=pi.window_size,
                                 number_of_clusters=cluster, lambda_parameter=lambd,
                                 beta=beta, maxIters=pi.maxIters, threshold=pi.threshold,
-                                compute_BIC=True)
+                                compute_BIC=True, num_processes=1)
     return clusts, mrfs, score, (beta, cluster, lambd)
