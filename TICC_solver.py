@@ -26,8 +26,8 @@ np.random.seed(102)
 
 def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     beta=400, maxIters=1000, threshold=2e-5, write_out_file=False,
-    input_data=None, prefix_string="", num_proc=1, compute_BIC=False,
-    verbose=False):
+    input_data=None, prefix_string="", pool=None, pool_lock=None, compute_BIC=False,
+    logging_level=logging.INFO):
     '''
     Main method for TICC solver.
     Parameters:
@@ -41,6 +41,9 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         - prefix_string: output directory if necessary
         - input_file: location of the data file
     '''
+    logging.basicConfig(level=logging_level)
+    assert pool is not None
+    assert pool_lock is not None
     assert maxIters > 0 # must have at least one iteration
     num_blocks = window_size + 1
     num_stacked = window_size
@@ -100,7 +103,6 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     empirical_covariances = {}
 
     # PERFORM TRAINING ITERATIONS
-    pool=Pool(processes=num_proc)
     for iters in xrange(maxIters):
         logging.info("\n\n\nITERATION ### %s" % iters)
         ##Get the train and test points
@@ -134,8 +136,9 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
                 rho = 1
                 solver = ADMMSolver(lamb, num_stacked, size_blocks, 1, S)
                 # apply to process pool
+                pool_lock.acquire()
                 optRes[cluster] = pool.apply_async(solver, (1000, 1e-6, 1e-6, False,))
-
+                pool_lock.release()
 
         for cluster in xrange(num_clusters):
             if optRes[cluster] == None:
@@ -214,7 +217,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         
 
         for cluster in xrange(num_clusters):
-            logging.debug("length of cluster #", cluster, "-------->", sum([x== cluster for x in clustered_points]))
+            logging.debug("length of cluseter %s ----> %s" % (cluster, sum([x== cluster for x in clustered_points]) ))
 
         true_confusion_matrix = compute_confusion_matrix(num_clusters,clustered_points,training_indices)
 
