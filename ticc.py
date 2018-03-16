@@ -157,7 +157,7 @@ def runHyperParameterTuning(beta_vals, lambda_vals, cluster_vals,
     processes_per, extra_processes = dividPoolSizes(
         process_pool_size, num_runs)
 
-    with cf.ThreadPoolExecutor(max_workers=process_pool_size) as executor:
+    with cf.ThreadPoolExecutor(max_workers=thread_pool_size) as executor:
         futures = [None]*num_runs
         futureIndex = 0
         for l in lambda_vals:

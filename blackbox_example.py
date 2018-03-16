@@ -5,4 +5,4 @@ from ticc import RunTicc
 
 fname = "edge_data.txt"
 
-cluster_assignment, cluster_mrfs = RunTicc(fname, "Results.txt", process_pool_size=1, input_format='graph', delimiter='\t')
+cluster_assignment, cluster_mrfs = RunTicc(fname, "Results.txt", process_pool_size=10, thread_pool_size=5, input_format='graph', delimiter='\t')
