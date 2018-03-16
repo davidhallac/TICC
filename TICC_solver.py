@@ -15,6 +15,8 @@ from multiprocessing import Pool
 
 from src.TICC_helper import *
 from src.admm_solver import ADMMSolver
+
+import logging
 #######################################################################################################################################################################
 pd.set_option('display.max_columns', 500)
 np.set_printoptions(formatter={'float': lambda x: "{0:0.4f}".format(x)})
@@ -24,7 +26,8 @@ np.random.seed(102)
 
 def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     beta=400, maxIters=1000, threshold=2e-5, write_out_file=False,
-    input_data=None, prefix_string="", num_proc=1, compute_BIC=False):
+    input_data=None, prefix_string="", num_proc=1, compute_BIC=False,
+    verbose=False):
     '''
     Main method for TICC solver.
     Parameters:
@@ -45,16 +48,13 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     lam_sparse = lambda_parameter # sparsity parameter
     num_clusters = number_of_clusters # Number of clusters
     cluster_reassignment = 20 # number of points to reassign to a 0 cluster
-    print "lam_sparse", lam_sparse
-    print "switch_penalty", switch_penalty
-    print "num_cluster", num_clusters
-    print "num stacked", num_stacked
+    logging.info("lam_sparse: %s, switch_penalty: %s, num_cluster: %s, num_stacked: %s" % (lam_sparse, switch_penalty, num_clusters, num_stacked))
 
     ######### Get Data into proper format
     Data = input_data
     # Data = np.loadtxt(input_file, delimiter= ",") 
     (m,n) = Data.shape # m: num of observations, n: size of observation vector
-    print "completed getting the data"
+    logging.debug("completed getting the data")
 
     ############
     ##The basic folder to be created
@@ -102,7 +102,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     # PERFORM TRAINING ITERATIONS
     pool=Pool(processes=num_proc)
     for iters in xrange(maxIters):
-        print "\n\n\nITERATION ###", iters
+        logging.info("\n\n\nITERATION ### %s" % iters)
         ##Get the train and test points
         train_clusters = collections.defaultdict(list) # {cluster: [point indices]}
         for point, cluster in enumerate(clustered_points):
@@ -141,7 +141,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
             if optRes[cluster] == None:
                 continue
             val = optRes[cluster].get()
-            print "OPTIMIZATION for Cluster #", cluster,"DONE!!!"
+            logging.debug("OPTIMIZATION for Cluster %s DONE!!!" % cluster)
             #THIS IS THE SOLUTION
             S_est = upperToFull(val, 0)
             X2 = S_est
@@ -154,11 +154,11 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
             train_cluster_inverse[cluster] = X2
 
         for cluster in xrange(num_clusters):
-            print "length of the cluster ", cluster,"------>", len_train_clusters[cluster]
+            logging.debug("length of cluster %s ----> %s" % (cluster, len_train_clusters[cluster]))
 
         # update old computed covariance
         old_computed_covariance = computed_covariance
-        print "UPDATED THE OLD COVARIANCE"
+        logging.debug("update the old covariance")
 
         inv_cov_dict = {} # cluster to inv_cov
         log_det_dict = {} # cluster to log_det
@@ -171,7 +171,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
 
         # -----------------------SMOOTHENING
         # For each point compute the LLE 
-        print "beginning the smoothening ALGORITHM"
+        logging.debug("begin the smoothening algorithm")
 
         LLE_all_points_clusters = np.zeros([bt.len(clustered_points),num_clusters])
         for point in xrange(bt.len(clustered_points)):
@@ -201,7 +201,6 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
                 if len_train_clusters[cluster] == 0:
                     cluster_selected = valid_clusters[counter] # a cluster that is not len 0
                     counter = (counter+1) % len(valid_clusters)
-                    print "cluster that is zero is:", cluster, "selected cluster instead is:", cluster_selected
                     start_point = np.random.choice(train_clusters[cluster_selected]) # random point number from that cluster
                     for i in range(0, cluster_reassignment):
                         # put cluster_reassignment points from point_num in this cluster
@@ -215,15 +214,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         
 
         for cluster in xrange(num_clusters):
-            print "length of cluster #", cluster, "-------->", sum([x== cluster for x in clustered_points])
-
-        ##Save a figure of segmentation
-        plt.figure()
-        plt.plot(training_indices[0:bt.len(clustered_points)],clustered_points,color = "r")#,marker = ".",s =100)
-        plt.ylim((-0.5,num_clusters + 0.5))
-        if write_out_file: plt.savefig(str_NULL + "TRAINING_EM_lam_sparse="+str(lam_sparse) + "switch_penalty = " + str(switch_penalty) + ".jpg")
-        plt.close("all")
-        print "Done writing the figure"
+            logging.debug("length of cluster #", cluster, "-------->", sum([x== cluster for x in clustered_points]))
 
         true_confusion_matrix = compute_confusion_matrix(num_clusters,clustered_points,training_indices)
 
@@ -260,10 +251,10 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         f1_GMM_tr = -1#computeF1_macro(train_confusion_matrix_GMM,matching_GMM,num_clusters)
         f1_kmeans_tr = -1#computeF1_macro(train_confusion_matrix_kmeans,matching_Kmeans,num_clusters)
 
-        print "\n\n\n"
+        logging.info("\n\n\n")
 
         if np.array_equal(old_clustered_points,clustered_points):
-            print "\n\n\n\nCONVERGED!!! BREAKING EARLY!!!"
+            logging.info("\n\n\n\nCONVERGED!!! BREAKING EARLY!!!")
             break
         old_clustered_points = clustered_points
         # end of training
@@ -275,9 +266,6 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     f1_EM_tr = -1#computeF1_macro(train_confusion_matrix_EM,matching_EM,num_clusters)
     f1_GMM_tr = -1#computeF1_macro(train_confusion_matrix_GMM,matching_GMM,num_clusters)
     f1_kmeans_tr = -1#computeF1_macro(train_confusion_matrix_kmeans,matching_Kmeans,num_clusters)
-
-    print "\n\n"
-    print "TRAINING F1 score:", f1_EM_tr, f1_GMM_tr, f1_kmeans_tr
 
     correct_EM = 0
     correct_GMM = 0
