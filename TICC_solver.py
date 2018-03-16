@@ -41,6 +41,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         - prefix_string: output directory if necessary
         - input_file: location of the data file
     '''
+    converged=False
     logging.basicConfig(level=logging_level)
     assert maxIters > 0 # must have at least one iteration
     num_blocks = window_size + 1
@@ -263,6 +264,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
 
         if np.array_equal(old_clustered_points,clustered_points):
             logging.info("\n\n\n\nCONVERGED!!! BREAKING EARLY!!!")
+            converged=True
             break
         old_clustered_points = clustered_points
         # end of training
@@ -295,7 +297,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     ##DONE WITH EVERYTHING 
     if compute_BIC:
         bic = computeBIC(num_clusters, m, clustered_points,train_cluster_inverse, empirical_covariances)
-        return (clustered_points, train_cluster_inverse, bic)
+        return (clustered_points, train_cluster_inverse, bic, converged)
     return (clustered_points, train_cluster_inverse)
 
 #######################################################################################################################################################################

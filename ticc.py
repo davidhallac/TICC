@@ -57,7 +57,7 @@ def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), proces
         input_data = retrieveInputGraphData(
             input_filename, input_dimensions, delim=delimiter)
     elif input_format == "matrix":
-        input_data = np.loadtxt(input_filename, delim=delimiter)
+        input_data = np.loadtxt(input_filename, delimiter=delimiter)
         if input_dimensions is not None:
             pca = PCA(n_components=input_dimensions)
             input_data = pca.fit_transform(input_data)
@@ -82,7 +82,6 @@ def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), proces
     beta, cluster_number, lambda_param = params
     print "Via BIC with score %s, using params beta: %s, clusterNum %s, lambda %s" % (
         score, beta, cluster_number, lambda_param)
-
     # perform real run
     cluster_assignments, cluster_MRFs = (None, None)
     if BIC_Iters == maxIters:  # already performed the full run
@@ -160,18 +159,23 @@ def runHyperParameterTuning(beta_vals, lambda_vals, cluster_vals,
     bestParams = (0, 0, 0)  # beta, cluster, lambda
     bestResults = (None, None)
     bestScore = None
+    bestConverge = False
     for future in futures:
-        clusts, mrfs, score, params = future.get()
-        if bestScore is None or score > bestScore:
+        clusts, mrfs, score, converged, params = future.get()
+        print params, score
+        if bestScore is None or (converged >= bestConverge and score < bestScore):
             bestScore = score
             bestParams = params
             bestResults = (clusts, mrfs)
+            bestConverge = converged
+    pool.close()
+    pool.join()
     return bestParams, bestResults, bestScore
 
 def runBIC(beta, cluster, lambd, pi):
     ''' pi should be a problem instance '''
-    clusts, mrfs, score = solve(input_data=pi.input_data, window_size=pi.window_size,
+    clusts, mrfs, score, converged = solve(input_data=pi.input_data, window_size=pi.window_size,
                                 number_of_clusters=cluster, lambda_parameter=lambd,
                                 beta=beta, maxIters=pi.maxIters, threshold=pi.threshold,
                                 compute_BIC=True, num_processes=1)
-    return clusts, mrfs, score, (beta, cluster, lambd)
+    return clusts, mrfs, score, converged, (beta, cluster, lambd)
