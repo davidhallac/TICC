@@ -19,7 +19,7 @@ ProblemInstance = namedtuple('ProblemInstance',
 def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), process_pool_size=None,
             window_size=1, lambda_param=[1e-2], beta=[0.01, 0.1, 0.5, 10, 50, 100, 500],
             maxIters=1000, threshold=2e-5, covariance_filename=None,
-            input_format='matrix', delimiter=',', BIC_Iters=15, input_dimensions=None,
+            input_format='matrix', delimiter=',', BIC_Iters=15, input_dimensions=50,
             logging_level=logging.INFO):
     '''
     Required Parameters:
@@ -60,7 +60,7 @@ def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), proces
             input_filename, input_dimensions, delim=delimiter)
     elif input_format == "matrix":
         input_data = np.loadtxt(input_filename, delimiter=delimiter)
-        if input_dimensions is not None:
+        if input_dimensions is not None and input_dimensions < np.shape(input_data)[1]:
             pca = PCA(n_components=input_dimensions)
             input_data = pca.fit_transform(input_data)
 
@@ -127,14 +127,12 @@ def GetChangePoints(cluster_assignment):
 def retrieveInputGraphData(input_filename, input_dimensions, delim=','):
     mapping = {}  # edge to value
     sparse_cols = []  # list of indices that should be 1
-    print delim
 
     with open(input_filename, 'rb') as csvfile:
         datareader = csv.reader(csvfile, delimiter=delim, quotechar='|')
         counter = 0
         curr_timestamp = None
         for row in datareader:
-            assert len(row) >= 2
             key = "%s_%s" % (row[0], row[1])
             timestamp = row[2]
             if timestamp != curr_timestamp:  # new time
