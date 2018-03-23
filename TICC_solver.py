@@ -145,7 +145,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
                     optRes[cluster] = solver(1000, 1e-6, 1e-6, False)
 
         for cluster in xrange(num_clusters):
-            if optRes[cluster] == None:
+            if optRes[cluster] is None:
                 continue
             val = optRes[cluster]
             if pool is not None:

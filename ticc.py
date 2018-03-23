@@ -77,24 +77,49 @@ def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), proces
     BIC_Iters = maxIters if BIC_Iters is None else BIC_Iters
     problem_instance = ProblemInstance(input_data=input_data, window_size=window_size,
                                        maxIters=BIC_Iters, threshold=threshold)
-    params, results, score = runHyperParameterTuning(beta, lambda_param, cluster_number,
-                                                     process_pool_size, problem_instance)
-    beta, cluster_number, lambda_param = params
-    print "Via BIC with score %s, using params beta: %s, clusterNum %s, lambda %s" % (
-        score, beta, cluster_number, lambda_param)
-    # perform real run
-    cluster_assignments, cluster_MRFs = (None, None)
-    if BIC_Iters == maxIters:  # already performed the full run
-        cluster_assignments, cluster_MRFs = results
-    else:
-        (cluster_assignment, cluster_MRFs) = solve(
-            window_size=window_size, number_of_clusters=cluster_number, lambda_parameter=lambda_param,
-            beta=beta, maxIters=maxIters, threshold=threshold,
-            input_data=input_data, num_processes=process_pool_size, logging_level=logging_level)
+    clusterResults = runHyperParameterTuning(beta, lambda_param, cluster_number,
+                                             process_pool_size, problem_instance)
+    final_results = []
+    for cluster_number, resultPackage in clusterResults:
+        params, results, score = resultPackage
+        beta, lambda_param = params
+        print "Via BIC with score %s, using params beta: %s, clusterNum %s, lambda %s" % (
+            score, beta, cluster_number, lambda_param)
+        # perform real run
+        cluster_assignments, cluster_MRFs = (None, None)
+        if BIC_Iters == maxIters:  # already performed the full run
+            cluster_assignments, cluster_MRFs = results
+        else:
+            (cluster_assignment, cluster_MRFs) = solve(
+                window_size=window_size, number_of_clusters=cluster_number, lambda_parameter=lambda_param,
+                beta=beta, maxIters=maxIters, threshold=threshold,
+                input_data=input_data, num_processes=process_pool_size, logging_level=logging_level)
+        outstream = "%s_%s" % (cluster_number, output_filename)
+        np.savetxt(outstream, cluster_assignment, fmt='%d', delimiter=',')
+        final_results.append(
+            (cluster_assignment, cluster_MRFs, (beta, lambda_param, cluster_number)))
+    return final_results
 
-    np.savetxt(output_filename, cluster_assignment, fmt='%d', delimiter=',')
 
-    return cluster_assignment, cluster_MRFs, params
+def GetChangePoints(cluster_assignment):
+    '''
+    Pass in the result of RunTicc to split into changepoint indexes
+    '''
+    currIndex = -1
+    index = -1
+    currCluster = -1
+    results = []
+    for cluster in cluster_assignment:
+        if currCluster != cluster:
+            if currCluster != -1:
+                results.append((currIndex, index, currCluster))
+            index += 1
+            currIndex = index
+            currCluster = cluster
+        else:
+            index += 1
+    results.append((currIndex, index, currCluster))
+    return results
 
 
 def retrieveInputGraphData(input_filename, input_dimensions, delim=','):
@@ -145,37 +170,43 @@ def retrieveInputGraphData(input_filename, input_dimensions, delim=','):
 
 def runHyperParameterTuning(beta_vals, lambda_vals, cluster_vals,
                             process_pool_size, problem_instance):
-    num_runs = len(beta_vals)*len(lambda_vals)*len(cluster_vals)
-
+    num_runs = len(beta_vals)*len(lambda_vals)
     pool = Pool(processes=process_pool_size)
-    futures = [None]*num_runs
-    futureIndex = 0
-    for l in lambda_vals:
-        for c in cluster_vals:
+    futures = [[None]*num_runs]*len(cluster_vals)
+    for i, c in enumerate(cluster_vals):
+        futureIndex = 0
+        for l in lambda_vals:
             for b in beta_vals:
-                futures[futureIndex] = pool.apply_async(runBIC, (b, c, l, problem_instance,))
+                futures[i][futureIndex] = pool.apply_async(
+                    runBIC, (b, c, l, problem_instance,))
                 futureIndex += 1
     # retrieve results
-    bestParams = (0, 0, 0)  # beta, cluster, lambda
-    bestResults = (None, None)
-    bestScore = None
-    bestConverge = False
-    for future in futures:
-        clusts, mrfs, score, converged, params = future.get()
-        print params, score
-        if bestScore is None or (converged >= bestConverge and score < bestScore):
-            bestScore = score
-            bestParams = params
-            bestResults = (clusts, mrfs)
-            bestConverge = converged
+    # [cluster, (bestParams, bestResults, bestScore)]
+    results = []
+    for i in range(len(cluster_vals)):
+        bestParams = (0, 0)  # beta, cluster, lambda
+        bestResults = (None, None)
+        bestScore = None
+        bestConverge = False
+        for future in futures[i]:
+            clusts, mrfs, score, converged, params = future.get()
+            print params, score
+            if bestScore is None or (converged >= bestConverge and score < bestScore):
+                bestScore = score
+                bestParams = params
+                bestResults = (clusts, mrfs)
+                bestConverge = converged
+        resultPackage = (bestParams, bestResults, bestScore)
+        results.append((cluster_vals[i], resultPackage))
     pool.close()
     pool.join()
-    return bestParams, bestResults, bestScore
+    return results
+
 
 def runBIC(beta, cluster, lambd, pi):
     ''' pi should be a problem instance '''
     clusts, mrfs, score, converged = solve(input_data=pi.input_data, window_size=pi.window_size,
-                                number_of_clusters=cluster, lambda_parameter=lambd,
-                                beta=beta, maxIters=pi.maxIters, threshold=pi.threshold,
-                                compute_BIC=True, num_processes=1)
-    return clusts, mrfs, score, converged, (beta, cluster, lambd)
+                                           number_of_clusters=cluster, lambda_parameter=lambd,
+                                           beta=beta, maxIters=pi.maxIters, threshold=pi.threshold,
+                                           compute_BIC=True, num_processes=1)
+    return clusts, mrfs, score, converged, (beta, lambd)

@@ -177,7 +177,6 @@ def computeBIC(K, T, clustered_points, inverse_covariances, empirical_covariance
 	T is num samples
 	'''
 	mod_lle = 0
-	
 	threshold = 2e-5
 	clusterParams = {}
 	for cluster, clusterInverse in inverse_covariances.iteritems():
