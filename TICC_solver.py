@@ -162,6 +162,10 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
             computed_covariance[num_clusters,cluster] = cov_out
             train_cluster_inverse[cluster] = X2
 
+        if pool is not None:
+            pool.close()
+            pool.join()
+
         for cluster in xrange(num_clusters):
             logging.debug("length of cluster %s ----> %s" % (cluster, len_train_clusters[cluster]))
 
