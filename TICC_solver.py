@@ -100,15 +100,16 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     old_clustered_points = None # points from last iteration
 
     empirical_covariances = {}
+
     pool = None
+    if num_processes > 1:
+        pool = Pool(processes=num_processes)
+
 
     # PERFORM TRAINING ITERATIONS
     for iters in xrange(maxIters):
         logging.info("\n\n\nITERATION ### %s" % iters)
         
-        if num_processes > 1:
-            pool = Pool(processes=num_processes)
-            
         ##Get the train and test points
         train_clusters = collections.defaultdict(list) # {cluster: [point indices]}
         for point, cluster in enumerate(clustered_points):
@@ -162,10 +163,6 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
             log_det_values[num_clusters, cluster] = np.log(np.linalg.det(cov_out))
             computed_covariance[num_clusters,cluster] = cov_out
             train_cluster_inverse[cluster] = X2
-
-        if pool is not None:
-            pool.close()
-            pool.join()
 
         for cluster in xrange(num_clusters):
             logging.debug("length of cluster %s ----> %s" % (cluster, len_train_clusters[cluster]))
@@ -273,6 +270,10 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
             break
         old_clustered_points = clustered_points
         # end of training
+
+    if pool is not None:
+        pool.close()
+        pool.join()
 
     train_confusion_matrix_EM = compute_confusion_matrix(num_clusters,clustered_points,training_indices)
     train_confusion_matrix_GMM = compute_confusion_matrix(num_clusters,gmm_clustered_pts,training_indices)
