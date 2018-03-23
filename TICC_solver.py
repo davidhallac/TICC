@@ -267,6 +267,10 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         old_clustered_points = clustered_points
         # end of training
 
+    if pool is not None:
+        pool.close()
+        pool.join()
+
     train_confusion_matrix_EM = compute_confusion_matrix(num_clusters,clustered_points,training_indices)
     train_confusion_matrix_GMM = compute_confusion_matrix(num_clusters,gmm_clustered_pts,training_indices)
     train_confusion_matrix_kmeans = compute_confusion_matrix(num_clusters,clustered_points_kmeans,training_indices)
