@@ -8,6 +8,7 @@ from collections import namedtuple
 import concurrent.futures as cf
 import threading
 from multiprocessing import Pool
+import multiprocessing
 
 # Problem Instance. Contains fields for problem except for the BIC
 # changeable ones.
@@ -15,10 +16,10 @@ ProblemInstance = namedtuple('ProblemInstance',
                              ['input_data', 'window_size', 'maxIters', 'threshold'])
 
 
-def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), process_pool_size=1,
-            window_size=1, lambda_param=11e-2, beta=[50, 100, 200, 400],
+def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), process_pool_size=None,
+            window_size=1, lambda_param=[1e-2], beta=[0.01, 0.1, 0.5, 10, 50, 100, 500],
             maxIters=1000, threshold=2e-5, covariance_filename=None,
-            input_format='matrix', delimiter=',', BIC_Iters=None, input_dimensions=None,
+            input_format='matrix', delimiter=',', BIC_Iters=15, input_dimensions=None,
             logging_level=logging.INFO):
     '''
     Required Parameters:
@@ -51,6 +52,7 @@ def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), proces
           <start label>, <end label>, value
     -- delimiter is the data file delimiter
     '''
+    process_pool_size = multiprocessing.cpu_count()
     logging.basicConfig(level=logging_level)
     input_data = None
     if input_format == 'graph':
@@ -125,12 +127,14 @@ def GetChangePoints(cluster_assignment):
 def retrieveInputGraphData(input_filename, input_dimensions, delim=','):
     mapping = {}  # edge to value
     sparse_cols = []  # list of indices that should be 1
+    print delim
 
     with open(input_filename, 'rb') as csvfile:
         datareader = csv.reader(csvfile, delimiter=delim, quotechar='|')
         counter = 0
         curr_timestamp = None
         for row in datareader:
+            assert len(row) >= 2
             key = "%s_%s" % (row[0], row[1])
             timestamp = row[2]
             if timestamp != curr_timestamp:  # new time
