@@ -100,14 +100,15 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     old_clustered_points = None # points from last iteration
 
     empirical_covariances = {}
-
     pool = None
-    if num_processes > 1:
-        pool = Pool(processes=num_processes)
 
     # PERFORM TRAINING ITERATIONS
     for iters in xrange(maxIters):
         logging.info("\n\n\nITERATION ### %s" % iters)
+        
+        if num_processes > 1:
+            pool = Pool(processes=num_processes)
+            
         ##Get the train and test points
         train_clusters = collections.defaultdict(list) # {cluster: [point indices]}
         for point, cluster in enumerate(clustered_points):
