@@ -174,25 +174,26 @@ def runHyperParameterTuning(beta_vals, lambda_vals, cluster_vals,
                             process_pool_size, problem_instance):
     num_runs = len(beta_vals)*len(lambda_vals)
     pool = Pool(processes=process_pool_size)
-    futures = [[None]*num_runs]*len(cluster_vals)
+    futures = []
     for i, c in enumerate(cluster_vals):
-        futureIndex = 0
+        future_list = []
         for l in lambda_vals:
             for b in beta_vals:
-                futures[i][futureIndex] = pool.apply_async(
-                    runBIC, (b, c, l, problem_instance,))
-                futureIndex += 1
+                future_list.append(pool.apply_async(
+                    runBIC, (b, c, l, problem_instance,)))
+        futures.append(future_list)
     # retrieve results
     # [cluster, (bestParams, bestResults, bestScore)]
     results = []
-    for i in range(len(cluster_vals)):
+    for i,c in enumerate(cluster_vals):
         bestParams = (0, 0)  # beta, cluster, lambda
         bestResults = (None, None)
         bestScore = None
         bestConverge = False
-        for future in futures[i]:
-            clusts, mrfs, score, converged, params = future.get()
-            print params, score
+        for j in range(num_runs):
+            vals = futures[i][j].get()
+            clusts, mrfs, score, converged, params = vals
+            print cluster_vals[i], params, score
             if bestScore is None or (converged >= bestConverge and score < bestScore):
                 bestScore = score
                 bestParams = params
