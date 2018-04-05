@@ -16,7 +16,7 @@ ProblemInstance = namedtuple('ProblemInstance',
                              ['input_data', 'window_size', 'maxIters', 'threshold'])
 
 
-def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), process_pool_size=None,
+def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), process_pool_size=10,
             window_size=1, lambda_param=[1e-2], beta=[0.01, 0.1, 0.5, 10, 50, 100, 500],
             maxIters=1000, threshold=2e-5, covariance_filename=None,
             input_format='matrix', delimiter=',', BIC_Iters=15, input_dimensions=50,
@@ -52,7 +52,6 @@ def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), proces
           <start label>, <end label>, value
     -- delimiter is the data file delimiter
     '''
-    process_pool_size = multiprocessing.cpu_count()
     logging.basicConfig(level=logging_level)
     input_data = None
     if input_format == 'graph':
@@ -67,8 +66,8 @@ def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), proces
     else:
         raise ValueError("input_format must either be graph or matrix")
 
-    print "Data loaded! With shape %s, %s" % (
-        np.shape(input_data)[0], np.shape(input_data)[1])
+    print("Data loaded! With shape %s, %s" % (
+        np.shape(input_data)[0], np.shape(input_data)[1]))
 
     # get params via BIC
     cluster_number = cluster_number if isinstance(
@@ -85,8 +84,8 @@ def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), proces
     for cluster_number, resultPackage in clusterResults:
         params, results, score = resultPackage
         beta, lambda_param = params
-        print "Via BIC with score %s, using params beta: %s, clusterNum %s, lambda %s" % (
-            score, beta, cluster_number, lambda_param)
+        print("Via BIC with score %s, using params beta: %s, clusterNum %s, lambda %s" % (
+            score, beta, cluster_number, lambda_param))
         # perform real run
         cluster_assignments, cluster_MRFs = (None, None)
         if BIC_Iters == maxIters:  # already performed the full run
@@ -128,7 +127,7 @@ def retrieveInputGraphData(input_filename, input_dimensions, delim=','):
     mapping = {}  # edge to value
     sparse_cols = []  # list of indices that should be 1
 
-    with open(input_filename, 'rb') as csvfile:
+    with open(input_filename, 'r') as csvfile:
         datareader = csv.reader(csvfile, delimiter=delim, quotechar='|')
         counter = 0
         curr_timestamp = None
@@ -185,7 +184,7 @@ def runHyperParameterTuning(beta_vals, lambda_vals, cluster_vals,
     # retrieve results
     # [cluster, (bestParams, bestResults, bestScore)]
     results = []
-    for i,c in enumerate(cluster_vals):
+    for i, c in enumerate(cluster_vals):
         bestParams = (0, 0)  # beta, cluster, lambda
         bestResults = (None, None)
         bestScore = None
@@ -193,7 +192,7 @@ def runHyperParameterTuning(beta_vals, lambda_vals, cluster_vals,
         for j in range(num_runs):
             vals = futures[i][j].get()
             clusts, mrfs, score, converged, params = vals
-            print cluster_vals[i], params, score
+            print(cluster_vals[i], params, score)
             if bestScore is None or (converged >= bestConverge and score < bestScore):
                 bestScore = score
                 bestParams = params

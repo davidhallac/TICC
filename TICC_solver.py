@@ -1,6 +1,5 @@
 import numpy as np 
 import math, time, collections, os, errno, sys, code, random
-import __builtin__ as bt
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -71,12 +70,12 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     ###-------INITIALIZATION----------
     # Train test split
     training_indices = getTrainTestSplit(m, num_blocks, num_stacked) #indices of the training samples
-    num_train_points = bt.len(training_indices)
+    num_train_points = len(training_indices)
     num_test_points = m - num_train_points
     ##Stack the training data
     complete_D_train = np.zeros([num_train_points, num_stacked*n])
-    for i in xrange(num_train_points):
-        for k in xrange(num_stacked):
+    for i in range(num_train_points):
+        for k in range(num_stacked):
             if i+k < num_train_points:
                 idx_k = training_indices[i+k]
                 complete_D_train[i][k*n:(k+1)*n] =  Data[idx_k][0:n]
@@ -107,7 +106,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
 
 
     # PERFORM TRAINING ITERATIONS
-    for iters in xrange(maxIters):
+    for iters in range(maxIters):
         logging.info("\n\n\nITERATION ### %s" % iters)
         
         ##Get the train and test points
@@ -115,18 +114,18 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         for point, cluster in enumerate(clustered_points):
             train_clusters[cluster].append(point)
 
-        len_train_clusters = {k: len(train_clusters[k]) for k in xrange(num_clusters)}
+        len_train_clusters = {k: len(train_clusters[k]) for k in range(num_clusters)}
 
         # train_clusters holds the indices in complete_D_train 
         # for each of the clusters
-        optRes = [None for i in xrange(num_clusters)] # actual results if only one process
-        for cluster in xrange(num_clusters):
+        optRes = [None for i in range(num_clusters)] # actual results if only one process
+        for cluster in range(num_clusters):
             cluster_length = len_train_clusters[cluster]
             if cluster_length != 0:
                 size_blocks = n
                 indices = train_clusters[cluster]
                 D_train = np.zeros([cluster_length,num_stacked*n])
-                for i in xrange(cluster_length):
+                for i in range(cluster_length):
                     point = indices[i]
                     D_train[i,:] = complete_D_train[point,:]
                 
@@ -146,7 +145,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
                 else:
                     optRes[cluster] = solver(1000, 1e-6, 1e-6, False)
 
-        for cluster in xrange(num_clusters):
+        for cluster in range(num_clusters):
             if optRes[cluster] is None:
                 continue
             val = optRes[cluster]
@@ -164,7 +163,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
             computed_covariance[num_clusters,cluster] = cov_out
             train_cluster_inverse[cluster] = X2
 
-        for cluster in xrange(num_clusters):
+        for cluster in range(num_clusters):
             logging.debug("length of cluster %s ----> %s" % (cluster, len_train_clusters[cluster]))
 
         # update old computed covariance
@@ -173,7 +172,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
 
         inv_cov_dict = {} # cluster to inv_cov
         log_det_dict = {} # cluster to log_det
-        for cluster in xrange(num_clusters):
+        for cluster in range(num_clusters):
             cov_matrix = computed_covariance[num_clusters,cluster][0:(num_blocks-1)*n,0:(num_blocks-1)*n]
             inv_cov_matrix = np.linalg.inv(cov_matrix)
             log_det_cov = np.log(np.linalg.det(cov_matrix))# log(det(sigma2|1))
@@ -184,10 +183,10 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         # For each point compute the LLE 
         logging.debug("begin the smoothening algorithm")
 
-        LLE_all_points_clusters = np.zeros([bt.len(clustered_points),num_clusters])
-        for point in xrange(bt.len(clustered_points)):
+        LLE_all_points_clusters = np.zeros([len(clustered_points),num_clusters])
+        for point in range(len(clustered_points)):
             if point + num_stacked-1 < complete_D_train.shape[0]:
-                for cluster in xrange(num_clusters):
+                for cluster in range(num_clusters):
                     cluster_mean = cluster_mean_info[num_clusters,cluster] 
                     cluster_mean_stacked = cluster_mean_stacked_info[num_clusters,cluster] 
                     x = complete_D_train[point,:] - cluster_mean_stacked[0:(num_blocks-1)*n]
@@ -200,7 +199,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         clustered_points = updateClusters(LLE_all_points_clusters,switch_penalty = switch_penalty)
 
         if iters != 0:
-            cluster_norms = [(np.linalg.norm(old_computed_covariance[num_clusters,i]), i) for i in xrange(num_clusters)]
+            cluster_norms = [(np.linalg.norm(old_computed_covariance[num_clusters,i]), i) for i in range(num_clusters)]
             norms_sorted = sorted(cluster_norms,reverse = True)
             # clusters that are not 0 as sorted by norm
             valid_clusters = [cp[1] for cp in norms_sorted if len_train_clusters[cp[1]] != 0]
@@ -208,7 +207,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
             # Add a point to the empty clusters 
             # assuming more non empty clusters than empty ones
             counter = 0
-            for cluster in xrange(num_clusters):
+            for cluster in range(num_clusters):
                 if len_train_clusters[cluster] == 0:
                     cluster_selected = valid_clusters[counter] # a cluster that is not len 0
                     counter = (counter+1) % len(valid_clusters)
@@ -224,7 +223,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
                         cluster_mean_info[num_clusters,cluster] = complete_D_train[point_to_move,:][(num_stacked-1)*n:num_stacked*n]
         
 
-        for cluster in xrange(num_clusters):
+        for cluster in range(num_clusters):
             logging.debug("length of cluseter %s ----> %s" % (cluster, sum([x== cluster for x in clustered_points]) ))
 
         true_confusion_matrix = compute_confusion_matrix(num_clusters,clustered_points,training_indices)
@@ -245,7 +244,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         correct_EM = 0
         correct_GMM = 0
         correct_KMeans = 0
-        for cluster in xrange(num_clusters):
+        for cluster in range(num_clusters):
             matched_cluster_EM = matching_EM[cluster]
             matched_cluster_GMM = matching_GMM[cluster]
             matched_cluster_Kmeans = matching_Kmeans[cluster]
@@ -253,9 +252,9 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
             correct_EM += train_confusion_matrix_EM[cluster,matched_cluster_EM]
             correct_GMM += train_confusion_matrix_GMM[cluster,matched_cluster_GMM]
             correct_KMeans += train_confusion_matrix_kmeans[cluster, matched_cluster_Kmeans]
-        binary_EM = correct_EM/bt.len(clustered_points)
-        binary_GMM = correct_GMM/bt.len(gmm_clustered_pts)
-        binary_Kmeans = correct_KMeans/bt.len(kmeans_clustered_pts)
+        binary_EM = correct_EM/len(clustered_points)
+        binary_GMM = correct_GMM/len(gmm_clustered_pts)
+        binary_Kmeans = correct_KMeans/len(kmeans_clustered_pts)
 
         ##compute the F1 macro scores
         f1_EM_tr = -1#computeF1_macro(train_confusion_matrix_EM,matching_EM,num_clusters)
@@ -286,7 +285,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     correct_EM = 0
     correct_GMM = 0
     correct_KMeans = 0
-    for cluster in xrange(num_clusters):
+    for cluster in range(num_clusters):
         matched_cluster_EM = matching_EM[cluster]
         matched_cluster_GMM = matching_GMM[cluster]
         matched_cluster_Kmeans = matching_Kmeans[cluster]

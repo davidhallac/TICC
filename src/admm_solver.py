@@ -7,9 +7,9 @@ class ADMMSolver:
         self.sizeBlocks = size_blocks
         probSize = num_stacked*size_blocks
         self.length = probSize*(probSize+1)/2
-        self.x = numpy.zeros(self.length)
-        self.z = numpy.zeros(self.length)
-        self.u = numpy.zeros(self.length)
+        self.x = numpy.zeros(int(self.length))
+        self.z = numpy.zeros(int(self.length))
+        self.u = numpy.zeros(int(self.length))
         self.rho = float(rho)
         self.S = S
         self.status = 'initialized'
@@ -43,7 +43,7 @@ class ADMMSolver:
     def ADMM_z(self, index_penalty = 1):
         a = self.x + self.u
         probSize = self.numBlocks*self.sizeBlocks
-        z_update = numpy.zeros(self.length)
+        z_update = numpy.zeros(int(self.length))
 
         # TODO: can we parallelize these?
         for i in range(self.numBlocks):
@@ -51,14 +51,14 @@ class ADMMSolver:
             for j in range(self.sizeBlocks):
                 startPoint = j if i==0 else 0
                 for k in range(startPoint, self.sizeBlocks):
-                    locList = [((l+i)*self.sizeBlocks + j, l*self.sizeBlocks+k) for l in range(elems)]
+                    locList = [((l+i)*self.sizeBlocks + j, l*self.sizeBlocks+k) for l in range(int(elems))]
                     if i == 0:
                         lamSum = sum(self.lamb[loc1, loc2] for (loc1, loc2) in locList)
                         indices = [self.ij2symmetric(loc1, loc2, probSize) for (loc1, loc2) in locList]
                     else:
                         lamSum = sum(self.lamb[loc2, loc1] for (loc1, loc2) in locList)
                         indices = [self.ij2symmetric(loc2, loc1, probSize) for (loc1, loc2) in locList]
-                    pointSum = sum(a[index] for index in indices)
+                    pointSum = sum(a[int(index)] for index in indices)
                     rhoPointSum = self.rho * pointSum
 
                     #Calculate soft threshold
@@ -70,7 +70,7 @@ class ADMMSolver:
                         ans = min((rhoPointSum + lamSum)/(self.rho*elems),0)
 
                     for index in indices:
-                        z_update[index] = ans
+                        z_update[int(index)] = ans
         self.z = z_update
 
     def ADMM_u(self):
@@ -98,10 +98,10 @@ class ADMMSolver:
         res_dual = norm(s)
         if verbose:
             # Debugging information to print convergence criteria values
-            print '  r:', res_pri
-            print '  e_pri:', e_pri
-            print '  s:', res_dual
-            print '  e_dual:', e_dual
+            print('  r:', res_pri)
+            print('  e_pri:', e_pri)
+            print('  s:', res_dual)
+            print('  e_dual:', e_dual)
         stop = (res_pri <= e_pri) and (res_dual <= e_dual)
         return (stop, res_pri, e_pri, res_dual, e_dual)
 
@@ -128,5 +128,5 @@ class ADMMSolver:
 
             if verbose:
                 # Debugging information prints current iteration #
-                print 'Iteration %d' % i
+                print('Iteration %d' % i)
         return self.x
