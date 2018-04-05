@@ -22,7 +22,9 @@ np.random.seed(102)
 
 #####################################################################################################################################################################################################
 
-def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, beta = 400, maxIters = 1000, threshold = 2e-5, write_out_file = False, input_file = None, prefix_string = "", num_proc = 1):
+def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
+    beta=400, maxIters=1000, threshold=2e-5, write_out_file=False,
+    input_file=None, prefix_string="", num_proc=1, compute_BIC=False):
     '''
     Main method for TICC solver.
     Parameters:
@@ -94,6 +96,8 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
     cluster_mean_stacked_info = {}
     old_clustered_points = None # points from last iteration
 
+    empirical_covariances = {}
+
     # PERFORM TRAINING ITERATIONS
     pool=Pool(processes=num_proc)
     for iters in range(maxIters):
@@ -125,6 +129,7 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
                 probSize = num_stacked * size_blocks
                 lamb = np.zeros((probSize,probSize)) + lam_sparse
                 S = np.cov(np.transpose(D_train) )
+                empirical_covariances[cluster] = S
 
                 rho = 1
                 solver = ADMMSolver(lamb, num_stacked, size_blocks, 1, S)
@@ -134,7 +139,7 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
                 optRes[cluster] = pool.apply_async(solver, (1000, 1e-6, 1e-6, False,))
 
 
-        for cluster in xrange(num_clusters):
+        for cluster in range(num_clusters):
             if optRes[cluster] == None:
                 continue
             val = optRes[cluster].get()
@@ -265,6 +270,10 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
         old_clustered_points = clustered_points
         # end of training
 
+    if pool is not None:
+        pool.close()
+        pool.join()
+
     train_confusion_matrix_EM = compute_confusion_matrix(num_clusters,clustered_points,training_indices)
     train_confusion_matrix_GMM = compute_confusion_matrix(num_clusters,gmm_clustered_pts,training_indices)
     train_confusion_matrix_kmeans = compute_confusion_matrix(num_clusters,clustered_points_kmeans,training_indices)
@@ -294,10 +303,12 @@ def solve(window_size = 10,number_of_clusters = 5, lambda_parameter = 11e-2, bet
 
     #########################################################
     ##DONE WITH EVERYTHING 
+    if compute_BIC:
+        bic = computeBIC(num_clusters, m, clustered_points,train_cluster_inverse, empirical_covariances)
+        return (clustered_points, train_cluster_inverse, bic)
     return (clustered_points, train_cluster_inverse)
 
 #######################################################################################################################################################################
-
 
 
 
