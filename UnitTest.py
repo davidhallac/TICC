@@ -18,7 +18,7 @@ class TestStringMethods(unittest.TestCase):
         for i in range(8):
             mrf = np.loadtxt("UnitTest_Data/cluster_"+str(i)+".txt",delimiter=',')
             try:
-                np.testing.assert_array_almost_equal(mrf, cluster_MRFs[i])
+                np.testing.assert_array_almost_equal(mrf, cluster_MRFs[i], decimal=3)
             except AssertionError:
                 #Test failed
                 self.assertTrue(1==0)             
@@ -35,7 +35,7 @@ class TestStringMethods(unittest.TestCase):
         for i in range(5):
             mrf = np.loadtxt("UnitTest_Data/multiCluster_"+str(i)+".txt",delimiter=',')
             try:
-                np.testing.assert_array_almost_equal(mrf, cluster_MRFs[i])
+                np.testing.assert_array_almost_equal(mrf, cluster_MRFs[i], decimal=3)
             except AssertionError:
                 #Test failed
                 self.assertTrue(1==0)

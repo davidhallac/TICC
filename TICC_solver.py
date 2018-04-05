@@ -1,6 +1,5 @@
 import numpy as np 
 import math, time, collections, os, errno, sys, code, random
-import builtins as bt
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -68,7 +67,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     ###-------INITIALIZATION----------
     # Train test split
     training_indices = getTrainTestSplit(m, num_blocks, num_stacked) #indices of the training samples
-    num_train_points = bt.len(training_indices)
+    num_train_points = len(training_indices)
     num_test_points = m - num_train_points
     ##Stack the training data
     complete_D_train = np.zeros([num_train_points, num_stacked*n])
@@ -134,7 +133,6 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
                 rho = 1
                 solver = ADMMSolver(lamb, num_stacked, size_blocks, 1, S)
                 clusterValues.append(solver(1000, 1e-6, 1e-6, False))
-                print(cluster)
                 # apply to process pool
                 optRes[cluster] = pool.apply_async(solver, (1000, 1e-6, 1e-6, False,))
 
@@ -175,8 +173,8 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         # For each point compute the LLE 
         print("beginning the smoothening ALGORITHM")
 
-        LLE_all_points_clusters = np.zeros([bt.len(clustered_points),num_clusters])
-        for point in range(bt.len(clustered_points)):
+        LLE_all_points_clusters = np.zeros([len(clustered_points),num_clusters])
+        for point in range(len(clustered_points)):
             if point + num_stacked-1 < complete_D_train.shape[0]:
                 for cluster in range(num_clusters):
                     cluster_mean = cluster_mean_info[num_clusters,cluster] 
@@ -203,7 +201,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
                 if len_train_clusters[cluster] == 0:
                     cluster_selected = valid_clusters[counter] # a cluster that is not len 0
                     counter = (counter+1) % len(valid_clusters)
-                    print "cluster that is zero is:", cluster, "selected cluster instead is:", cluster_selected
+                    print("cluster that is zero is:", cluster, "selected cluster instead is:", cluster_selected)
                     start_point = np.random.choice(train_clusters[cluster_selected]) # random point number from that cluster
                     for i in range(0, cluster_reassignment):
                         # put cluster_reassignment points from point_num in this cluster
@@ -221,7 +219,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
 
         ##Save a figure of segmentation
         plt.figure()
-        plt.plot(training_indices[0:bt.len(clustered_points)],clustered_points,color = "r")#,marker = ".",s =100)
+        plt.plot(training_indices[0:len(clustered_points)],clustered_points,color = "r")#,marker = ".",s =100)
         plt.ylim((-0.5,num_clusters + 0.5))
         if write_out_file: plt.savefig(str_NULL + "TRAINING_EM_lam_sparse="+str(lam_sparse) + "switch_penalty = " + str(switch_penalty) + ".jpg")
         plt.close("all")
@@ -253,9 +251,9 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
             correct_EM += train_confusion_matrix_EM[cluster,matched_cluster_EM]
             correct_GMM += train_confusion_matrix_GMM[cluster,matched_cluster_GMM]
             correct_KMeans += train_confusion_matrix_kmeans[cluster, matched_cluster_Kmeans]
-        binary_EM = correct_EM/bt.len(clustered_points)
-        binary_GMM = correct_GMM/bt.len(gmm_clustered_pts)
-        binary_Kmeans = correct_KMeans/bt.len(kmeans_clustered_pts)
+        binary_EM = correct_EM/len(clustered_points)
+        binary_GMM = correct_GMM/len(gmm_clustered_pts)
+        binary_Kmeans = correct_KMeans/len(kmeans_clustered_pts)
 
         ##compute the F1 macro scores
         f1_EM_tr = -1#computeF1_macro(train_confusion_matrix_EM,matching_EM,num_clusters)
