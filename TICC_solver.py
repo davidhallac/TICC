@@ -111,7 +111,6 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         # train_clusters holds the indices in complete_D_train 
         # for each of the clusters
         optRes = [None for i in range(num_clusters)]
-        clusterValues = []
         for cluster in range(num_clusters):
             cluster_length = len_train_clusters[cluster]
             if cluster_length != 0:
@@ -132,7 +131,6 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
 
                 rho = 1
                 solver = ADMMSolver(lamb, num_stacked, size_blocks, 1, S)
-                clusterValues.append(solver(1000, 1e-6, 1e-6, False))
                 # apply to process pool
                 optRes[cluster] = pool.apply_async(solver, (1000, 1e-6, 1e-6, False,))
 
