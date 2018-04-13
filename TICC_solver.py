@@ -186,21 +186,30 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         ##Update cluster points - using NEW smoothening
         clustered_points = updateClusters(LLE_all_points_clusters,switch_penalty = switch_penalty)
 
+        # recalculate lengths
+        new_train_clusters = collections.defaultdict(list) # {cluster: [point indices]}
+        for point, cluster in enumerate(clustered_points):
+            new_train_clusters[cluster].append(point)
+
+        len_new_train_clusters = {k: len(new_train_clusters[k]) for k in range(num_clusters)}
+
+        before_empty_cluster_assign = clustered_points.copy()
+
         if iters != 0:
             cluster_norms = [(np.linalg.norm(old_computed_covariance[num_clusters,i]), i) for i in range(num_clusters)]
             norms_sorted = sorted(cluster_norms,reverse = True)
             # clusters that are not 0 as sorted by norm
-            valid_clusters = [cp[1] for cp in norms_sorted if len_train_clusters[cp[1]] != 0]
+            valid_clusters = [cp[1] for cp in norms_sorted if len_new_train_clusters[cp[1]] != 0]
 
             # Add a point to the empty clusters 
             # assuming more non empty clusters than empty ones
             counter = 0
             for cluster in range(num_clusters):
-                if len_train_clusters[cluster] == 0:
+                if len_new_train_clusters[cluster] == 0:
                     cluster_selected = valid_clusters[counter] # a cluster that is not len 0
                     counter = (counter+1) % len(valid_clusters)
                     print("cluster that is zero is:", cluster, "selected cluster instead is:", cluster_selected)
-                    start_point = np.random.choice(train_clusters[cluster_selected]) # random point number from that cluster
+                    start_point = np.random.choice(new_train_clusters[cluster_selected]) # random point number from that cluster
                     for i in range(0, cluster_reassignment):
                         # put cluster_reassignment points from point_num in this cluster
                         point_to_move = start_point + i
@@ -260,10 +269,11 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
 
         print("\n\n\n")
 
-        if np.array_equal(old_clustered_points,clustered_points):
+        # check points without reassignment
+        if np.array_equal(old_clustered_points,before_empty_cluster_assign):
             print("\n\n\n\nCONVERGED!!! BREAKING EARLY!!!")
             break
-        old_clustered_points = clustered_points
+        old_clustered_points = before_empty_cluster_assign
         # end of training
 
     if pool is not None:
