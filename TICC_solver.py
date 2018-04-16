@@ -1,6 +1,5 @@
 import numpy as np
 import math, time, collections, os, errno, sys, code, random
-import __builtin__ as bt
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -77,7 +76,7 @@ class TICC:
         # Train test split
         training_indices = getTrainTestSplit(time_series_rows_size, self.num_blocks,
                                              self.window_size)  # indices of the training samples
-        num_train_points = bt.len(training_indices)
+        num_train_points = len(training_indices)
 
         # Stack the training data
         complete_D_train = self.stack_training_data(times_series_arr, time_series_col_size, num_train_points,
@@ -89,7 +88,6 @@ class TICC:
         gmm.fit(complete_D_train)
         clustered_points = gmm.predict(complete_D_train)
         gmm_clustered_pts = clustered_points + 0
-
         # K-means
         kmeans = KMeans(n_clusters=self.number_of_clusters, random_state=0).fit(complete_D_train)
         clustered_points_kmeans = kmeans.labels_  # todo, is there a difference between these two?
@@ -106,14 +104,14 @@ class TICC:
 
         # PERFORM TRAINING ITERATIONS
         pool = Pool(processes=self.num_proc)  # multi-threading
-        for iters in xrange(self.maxIters):
-            print "\n\n\nITERATION ###", iters
+        for iters in range(self.maxIters):
+            print("\n\n\nITERATION ###", iters)
             # Get the train and test points
             train_clusters_arr = collections.defaultdict(list)  # {cluster: [point indices]}
             for point, cluster_num in enumerate(clustered_points):
                 train_clusters_arr[cluster_num].append(point)
 
-            len_train_clusters = {k: len(train_clusters_arr[k]) for k in xrange(self.number_of_clusters)}
+            len_train_clusters = {k: len(train_clusters_arr[k]) for k in range(self.number_of_clusters)}
 
             # train_clusters holds the indices in complete_D_train
             # for each of the clusters
@@ -127,36 +125,47 @@ class TICC:
             # update old computed covariance
             old_computed_covariance = computed_covariance
 
-            print "UPDATED THE OLD COVARIANCE"
+            print("UPDATED THE OLD COVARIANCE")
 
             # SMOOTHENING
             lle_all_points_clusters = self.smoothen_clusters(cluster_mean_info,
                                                              computed_covariance,
                                                              cluster_mean_stacked_info,
-                                                             bt.len(clustered_points),
+                                                             len(clustered_points),
                                                              complete_D_train,
                                                              time_series_col_size)
 
             # Update cluster points - using NEW smoothening
             clustered_points = updateClusters(lle_all_points_clusters, switch_penalty=self.switch_penalty)
 
+            # recalculate lengths
+            new_train_clusters = collections.defaultdict(list) # {cluster: [point indices]}
+            for point, cluster in enumerate(clustered_points):
+                new_train_clusters[cluster].append(point)
+
+            len_new_train_clusters = {k: len(new_train_clusters[k]) for k in range(self.number_of_clusters)}
+
+            before_empty_cluster_assign = clustered_points.copy()
+
+
+
             if iters != 0:
                 cluster_norms = [(np.linalg.norm(old_computed_covariance[self.number_of_clusters, i]), i) for i in
-                                 xrange(self.number_of_clusters)]
+                                 range(self.number_of_clusters)]
                 norms_sorted = sorted(cluster_norms, reverse=True)
                 # clusters that are not 0 as sorted by norm
-                valid_clusters = [cp[1] for cp in norms_sorted if len_train_clusters[cp[1]] != 0]
+                valid_clusters = [cp[1] for cp in norms_sorted if len_new_train_clusters[cp[1]] != 0]
 
                 # Add a point to the empty clusters
                 # assuming more non empty clusters than empty ones
                 counter = 0
-                for cluster_num in xrange(self.number_of_clusters):
-                    if len_train_clusters[cluster_num] == 0:
+                for cluster_num in range(self.number_of_clusters):
+                    if len_new_train_clusters[cluster_num] == 0:
                         cluster_selected = valid_clusters[counter]  # a cluster that is not len 0
                         counter = (counter + 1) % len(valid_clusters)
-                        print "cluster that is zero is:", cluster_num, "selected cluster instead is:", cluster_selected
+                        print("cluster that is zero is:", cluster_num, "selected cluster instead is:", cluster_selected)
                         start_point = np.random.choice(
-                            train_clusters_arr[cluster_selected])  # random point number from that cluster
+                            new_train_clusters[cluster_selected])  # random point number from that cluster
                         for i in range(0, self.cluster_reassignment):
                             # put cluster_reassignment points from point_num in this cluster
                             point_to_move = start_point + i
@@ -171,8 +180,8 @@ class TICC:
                                 = complete_D_train[point_to_move, :][
                                   (self.window_size - 1) * time_series_col_size:self.window_size * time_series_col_size]
 
-            for cluster_num in xrange(self.number_of_clusters):
-                print "length of cluster #", cluster_num, "-------->", sum([x == cluster_num for x in clustered_points])
+            for cluster_num in range(self.number_of_clusters):
+                print("length of cluster #", cluster_num, "-------->", sum([x == cluster_num for x in clustered_points]))
 
             self.write_plot(clustered_points, str_NULL, training_indices)
 
@@ -192,12 +201,12 @@ class TICC:
                                                                               train_confusion_matrix_GMM,
                                                                               train_confusion_matrix_kmeans)
 
-            print "\n\n\n"
+            print("\n\n\n")
 
             if np.array_equal(old_clustered_points, clustered_points):
-                print "\n\n\n\nCONVERGED!!! BREAKING EARLY!!!"
+                print("\n\n\n\nCONVERGED!!! BREAKING EARLY!!!")
                 break
-            old_clustered_points = clustered_points
+            old_clustered_points = before_empty_cluster_assign
             # end of training
         if pool is not None:
             pool.close()
@@ -224,12 +233,12 @@ class TICC:
         f1_EM_tr = -1  # computeF1_macro(train_confusion_matrix_EM,matching_EM,num_clusters)
         f1_GMM_tr = -1  # computeF1_macro(train_confusion_matrix_GMM,matching_GMM,num_clusters)
         f1_kmeans_tr = -1  # computeF1_macro(train_confusion_matrix_kmeans,matching_Kmeans,num_clusters)
-        print "\n\n"
-        print "TRAINING F1 score:", f1_EM_tr, f1_GMM_tr, f1_kmeans_tr
+        print("\n\n")
+        print("TRAINING F1 score:", f1_EM_tr, f1_GMM_tr, f1_kmeans_tr)
         correct_e_m = 0
         correct_g_m_m = 0
         correct_k_means = 0
-        for cluster in xrange(self.number_of_clusters):
+        for cluster in range(self.number_of_clusters):
             matched_cluster__e_m = matching_EM[cluster]
             matched_cluster__g_m_m = matching_GMM[cluster]
             matched_cluster__k_means = matching_Kmeans[cluster]
@@ -245,7 +254,7 @@ class TICC:
         correct_e_m = 0
         correct_g_m_m = 0
         correct_k_means = 0
-        for cluster in xrange(self.number_of_clusters):
+        for cluster in range(self.number_of_clusters):
             matched_cluster_e_m = matching_EM[cluster]
             matched_cluster_g_m_m = matching_GMM[cluster]
             matched_cluster_k_means = matching_Kmeans[cluster]
@@ -258,19 +267,19 @@ class TICC:
     def write_plot(self, clustered_points, str_NULL, training_indices):
         # Save a figure of segmentation
         plt.figure()
-        plt.plot(training_indices[0:bt.len(clustered_points)], clustered_points, color="r")  # ,marker = ".",s =100)
+        plt.plot(training_indices[0:len(clustered_points)], clustered_points, color="r")  # ,marker = ".",s =100)
         plt.ylim((-0.5, self.number_of_clusters + 0.5))
         if self.write_out_file: plt.savefig(
             str_NULL + "TRAINING_EM_lam_sparse=" + str(self.lambda_parameter) + "switch_penalty = " + str(
                 self.switch_penalty) + ".jpg")
         plt.close("all")
-        print "Done writing the figure"
+        print("Done writing the figure")
 
     def smoothen_clusters(self, cluster_mean_info, computed_covariance,
                           cluster_mean_stacked_info, clustered_points_len, complete_D_train, n):
         inv_cov_dict = {}  # cluster to inv_cov
         log_det_dict = {}  # cluster to log_det
-        for cluster in xrange(self.number_of_clusters):
+        for cluster in range(self.number_of_clusters):
             cov_matrix = computed_covariance[self.number_of_clusters, cluster][0:(self.num_blocks - 1) * n,
                          0:(self.num_blocks - 1) * n]
             inv_cov_matrix = np.linalg.inv(cov_matrix)
@@ -278,11 +287,11 @@ class TICC:
             inv_cov_dict[cluster] = inv_cov_matrix
             log_det_dict[cluster] = log_det_cov
         # For each point compute the LLE
-        print "beginning the smoothening ALGORITHM"
+        print("beginning the smoothening ALGORITHM")
         LLE_all_points_clusters = np.zeros([clustered_points_len, self.number_of_clusters])
-        for point in xrange(clustered_points_len):
+        for point in range(clustered_points_len):
             if point + self.window_size - 1 < complete_D_train.shape[0]:
-                for cluster in xrange(self.number_of_clusters):
+                for cluster in range(self.number_of_clusters):
                     cluster_mean = cluster_mean_info[self.number_of_clusters, cluster]
                     cluster_mean_stacked = cluster_mean_stacked_info[self.number_of_clusters, cluster]
                     x = complete_D_train[point, :] - cluster_mean_stacked[0:(self.num_blocks - 1) * n]
@@ -295,11 +304,11 @@ class TICC:
         return LLE_all_points_clusters
 
     def optimize_clusters(self, computed_covariance, len_train_clusters, log_det_values, optRes, train_cluster_inverse):
-        for cluster in xrange(self.number_of_clusters):
+        for cluster in range(self.number_of_clusters):
             if optRes[cluster] == None:
                 continue
             val = optRes[cluster].get()
-            print "OPTIMIZATION for Cluster #", cluster, "DONE!!!"
+            print("OPTIMIZATION for Cluster #", cluster, "DONE!!!")
             # THIS IS THE SOLUTION
             S_est = upperToFull(val, 0)
             X2 = S_est
@@ -310,19 +319,19 @@ class TICC:
             log_det_values[self.number_of_clusters, cluster] = np.log(np.linalg.det(cov_out))
             computed_covariance[self.number_of_clusters, cluster] = cov_out
             train_cluster_inverse[cluster] = X2
-        for cluster in xrange(self.number_of_clusters):
-            print "length of the cluster ", cluster, "------>", len_train_clusters[cluster]
+        for cluster in range(self.number_of_clusters):
+            print("length of the cluster ", cluster, "------>", len_train_clusters[cluster])
 
     def train_clusters(self, cluster_mean_info, cluster_mean_stacked_info, complete_D_train, empirical_covariances,
                        len_train_clusters, n, pool, train_clusters_arr):
-        optRes = [None for i in xrange(self.number_of_clusters)]
-        for cluster in xrange(self.number_of_clusters):
+        optRes = [None for i in range(self.number_of_clusters)]
+        for cluster in range(self.number_of_clusters):
             cluster_length = len_train_clusters[cluster]
             if cluster_length != 0:
                 size_blocks = n
                 indices = train_clusters_arr[cluster]
                 D_train = np.zeros([cluster_length, self.window_size * n])
-                for i in xrange(cluster_length):
+                for i in range(cluster_length):
                     point = indices[i]
                     D_train[i, :] = complete_D_train[point, :]
 
@@ -345,8 +354,8 @@ class TICC:
 
     def stack_training_data(self, Data, n, num_train_points, training_indices):
         complete_D_train = np.zeros([num_train_points, self.window_size * n])
-        for i in xrange(num_train_points):
-            for k in xrange(self.window_size):
+        for i in range(num_train_points):
+            for k in range(self.window_size):
                 if i + k < num_train_points:
                     idx_k = training_indices[i + k]
                     complete_D_train[i][k * n:(k + 1) * n] = Data[idx_k][0:n]
@@ -367,11 +376,11 @@ class TICC:
     def load_data(self, input_file):
         Data = np.loadtxt(input_file, delimiter=",")
         (m, n) = Data.shape  # m: num of observations, n: size of observation vector
-        print "completed getting the data"
+        print("completed getting the data")
         return Data, m, n
 
     def log_parameters(self):
-        print "lam_sparse", self.lambda_parameter
-        print "switch_penalty", self.switch_penalty
-        print "num_cluster", self.number_of_clusters
-        print "num stacked", self.window_size
+        print("lam_sparse", self.lambda_parameter)
+        print("switch_penalty", self.switch_penalty)
+        print("num_cluster", self.number_of_clusters)
+        print("num stacked", self.window_size)
