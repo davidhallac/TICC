@@ -17,7 +17,7 @@ from src.admm_solver import ADMMSolver
 #######################################################################################################################################################################
 pd.set_option('display.max_columns', 500)
 np.set_printoptions(formatter={'float': lambda x: "{0:0.4f}".format(x)})
-np.random.seed(102)
+# np.random.seed(102)
 
 #####################################################################################################################################################################################################
 
@@ -37,6 +37,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         - prefix_string: output directory if necessary
         - input_file: location of the data file
     '''
+    np.random.seed(102)
     assert maxIters > 0 # must have at least one iteration
     num_blocks = window_size + 1
     num_stacked = window_size
