@@ -14,9 +14,9 @@ Using TICC
 ======================
 
 ```
-TICC_solver.py
+TICC()
 ```
-Solver for the TICC algorithm. This file utilizes several helper functions in the src directory, but the user only needs to interface with TICC_solver.py. The solve function within the file can run an instance of the TICC algorithm. The details of the solve function are as below:
+Initializes problem:
 
 **Parameters**
 
@@ -35,6 +35,15 @@ threshold: convergence threshold
 write_out_file : Boolean. Flag indicating if the computed inverse covariances for each of the clusters should be saved.
 
 prefix_string: Location of the folder to which you want to save the outputs.
+
+
+```
+TICC.fit()
+```
+
+Runs the TICC algorithm on a specific dataset to learn the model parameters.
+
+**Parameter**
 
 input_file: Location of the Data matrix of size T-by-n.
 
