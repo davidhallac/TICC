@@ -48,7 +48,7 @@ Runs the TICC algorithm on a specific dataset to learn the model parameters.
 input_file: Location of the Data matrix of size T-by-n.
 
 
-**Returns**
+**Returns** 
 
 returns an array of cluster assignments for each time point.
 
