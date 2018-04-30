@@ -8,10 +8,7 @@ Download the source code, by running in the terminal:
 ```
 git clone https://github.com/davidhallac/TICC.git
 ```
-Alternatively, install the python library using 
-```
-pip install ticc
-```
+
 
 ## Using TICC
 The `TICC`-constructor takes the following parameters:
