@@ -14,33 +14,21 @@ from src.admm_solver import ADMMSolver
 
 
 class TICC:
-    window_size = 10
-    number_of_clusters = 5
-    lambda_parameter = 11e-2
-    switch_penalty = 400
-    maxIters = 1000
-    threshold = 2e-5
-    write_out_file = False
-    prefix_string = ''
-    num_proc = 1
-    compute_BIC = False
-    num_blocks = None
-    cluster_reassignment = 20  # number of points to reassign to a 0 cluster
-
     def __init__(self, window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
                  beta=400, maxIters=1000, threshold=2e-5, write_out_file=False,
-                 prefix_string="", num_proc=1, compute_BIC=False):
+                 prefix_string="", num_proc=1, compute_BIC=False, cluster_reassignment=20):
         """
-                Parameters:
-                    - window_size: size of the sliding window
-                    - number_of_clusters: number of clusters
-                    - lambda_parameter: sparsity parameter
-                    - switch_penalty: temporal consistency parameter
-                    - maxIters: number of iterations
-                    - threshold: convergence threshold
-                    - write_out_file: (bool) if true, prefix_string is output file dir
-                    - prefix_string: output directory if necessary
-                """
+        Parameters:
+            - window_size: size of the sliding window
+            - number_of_clusters: number of clusters
+            - lambda_parameter: sparsity parameter
+            - switch_penalty: temporal consistency parameter
+            - maxIters: number of iterations
+            - threshold: convergence threshold
+            - write_out_file: (bool) if true, prefix_string is output file dir
+            - prefix_string: output directory if necessary
+            - cluster_reassignment: number of points to reassign to a 0 cluster
+        """
         self.window_size = window_size
         self.number_of_clusters = number_of_clusters
         self.lambda_parameter = lambda_parameter
@@ -51,7 +39,7 @@ class TICC:
         self.prefix_string = prefix_string
         self.num_proc = num_proc
         self.compute_BIC = compute_BIC
-
+        self.cluster_reassignment = cluster_reassignment
         self.num_blocks = self.window_size + 1
         pd.set_option('display.max_columns', 500)
         np.set_printoptions(formatter={'float': lambda x: "{0:0.4f}".format(x)})
