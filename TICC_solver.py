@@ -115,16 +115,12 @@ class TICC:
 
             print("UPDATED THE OLD COVARIANCE")
 
-            # SMOOTHENING
-            lle_all_points_clusters = self.smoothen_clusters(cluster_mean_info,
-                                                             computed_covariance,
-                                                             cluster_mean_stacked_info,
-                                                             len(clustered_points),
-                                                             complete_D_train,
-                                                             time_series_col_size)
-
-            # Update cluster points - using NEW smoothening
-            clustered_points = updateClusters(lle_all_points_clusters, switch_penalty=self.switch_penalty)
+            self.trained_model = {'cluster_mean_info': cluster_mean_info,
+                                 'computed_covariance': computed_covariance,
+                                 'cluster_mean_stacked_info': cluster_mean_stacked_info,
+                                 'complete_D_train': complete_D_train,
+                                 'time_series_col_size': time_series_col_size}
+            clustered_points = self.predict_clusters()
 
             # recalculate lengths
             new_train_clusters = collections.defaultdict(list) # {cluster: [point indices]}
@@ -264,7 +260,8 @@ class TICC:
         print("Done writing the figure")
 
     def smoothen_clusters(self, cluster_mean_info, computed_covariance,
-                          cluster_mean_stacked_info, clustered_points_len, complete_D_train, n):
+                          cluster_mean_stacked_info, complete_D_train, n):
+        clustered_points_len = len(complete_D_train)
         inv_cov_dict = {}  # cluster to inv_cov
         log_det_dict = {}  # cluster to log_det
         for cluster in range(self.number_of_clusters):
@@ -372,3 +369,33 @@ class TICC:
         print("switch_penalty", self.switch_penalty)
         print("num_cluster", self.number_of_clusters)
         print("num stacked", self.window_size)
+
+    def predict_clusters(self, test_data = None):
+        '''
+        Given the current trained model, predict clusters.  If the cluster segmentation has not been optimized yet,
+        than this will be part of the interative process.
+
+        Args:
+            numpy array of data for which to predict clusters.  Columns are dimensions of the data, each row is
+            a different timestamp
+
+        Returns:
+            vector of predicted cluster for the points
+        '''
+        if test_data is not None:
+            if not isinstance(test_data, np.ndarray):
+                raise TypeError("input must be a numpy array!")
+        else:
+            test_data = self.trained_model['complete_D_train']
+
+        # SMOOTHENING
+        lle_all_points_clusters = self.smoothen_clusters(self.trained_model['cluster_mean_info'],
+                                                         self.trained_model['computed_covariance'],
+                                                         self.trained_model['cluster_mean_stacked_info'],
+                                                         test_data,
+                                                         self.trained_model['time_series_col_size'])
+
+        # Update cluster points - using NEW smoothening
+        clustered_points = updateClusters(lle_all_points_clusters, switch_penalty=self.switch_penalty)
+
+        return(clustered_points)
