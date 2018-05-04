@@ -4,8 +4,6 @@ import numpy as np
 import sys
 
 
-
-
 class TestStringMethods(unittest.TestCase):
 
     def test_example(self):
@@ -16,6 +14,29 @@ class TestStringMethods(unittest.TestCase):
         assign = np.loadtxt("UnitTest_Data/Results.txt")
         val = abs(assign - cluster_assignment)
         self.assertEqual(sum(val), 0)
+
+        # Test prediction works with batch of data outside of `fit` method. Perhaps there is a better way
+        # to test this in parallel so these are more like unit tests rather than integration tests?
+        test_batch = ticc.predict_clusters(ticc.trained_model['complete_D_train'][0:1000, ])
+        batch_val = abs(test_batch - cluster_assignment[0:1000])
+        self.assertEqual(sum(batch_val), 0)
+
+        # Test streaming by passing in 5 row blocks at a time (current timestamp and previous 4)
+        # I am causing data leakage by training on the whole set and then using the trained model while streaming,
+        # but this is for testing the code, so it is ok
+        # TODO: figure out why larger blocks don't improve predictions more. Reference:
+        # https://github.com/davidhallac/TICC/issues/18#issuecomment-384514116
+        def test_streaming(block_size):
+            test_stream = np.zeros(1000)
+            test_stream[0:block_size] = cluster_assignment[0:block_size]
+            for i in range(block_size, 1000):
+                point = ticc.trained_model['complete_D_train'][i - block_size:i, ]
+                test_stream[i] = ticc.predict_clusters(point)[block_size - 1]
+
+            percent_correct_streaming = 100 * sum(cluster_assignment[0:1000] == test_stream) / 1000.0
+            self.assertGreater(percent_correct_streaming, 0.9)
+
+        test_streaming(5)
 
         for i in range(8):
             mrf = np.loadtxt("UnitTest_Data/cluster_"+str(i)+".txt",delimiter=',')
