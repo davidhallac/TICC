@@ -66,7 +66,7 @@ def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), proces
     else:
         raise ValueError("input_format must either be graph or matrix")
 
-    print("Data loaded! With shape %s, %s" % (
+    logging.debug("Data loaded! With shape %s, %s" % (
         np.shape(input_data)[0], np.shape(input_data)[1]))
 
     # get params via BIC
@@ -84,7 +84,7 @@ def RunTicc(input_filename, output_filename, cluster_number=range(2, 11), proces
     for cluster_number, resultPackage in clusterResults:
         params, results, score = resultPackage
         beta, lambda_param = params
-        print("Via BIC with score %s, using params beta: %s, clusterNum %s, lambda %s" % (
+        logging.info("Via BIC with score %s, using params beta: %s, clusterNum %s, lambda %s" % (
             score, beta, cluster_number, lambda_param))
         # perform real run
         cluster_assignments, cluster_MRFs = (None, None)
@@ -192,7 +192,7 @@ def runHyperParameterTuning(beta_vals, lambda_vals, cluster_vals,
         for j in range(num_runs):
             vals = futures[i][j].get()
             clusts, mrfs, score, converged, params = vals
-            print(cluster_vals[i], params, score)
+            logging.info("%s,%s,%s" % (cluster_vals[i], params, score))
             if bestScore is None or (converged >= bestConverge and score < bestScore):
                 bestScore = score
                 bestParams = params

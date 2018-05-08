@@ -48,6 +48,7 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     switch_penalty = beta # smoothness penalty
     lam_sparse = lambda_parameter # sparsity parameter
     num_clusters = number_of_clusters # Number of clusters
+
     cluster_reassignment = 20 # number of points to reassign to a 0 cluster
     logging.info("lam_sparse: %s, switch_penalty: %s, num_cluster: %s, num_stacked: %s" % (lam_sparse, switch_penalty, num_clusters, num_stacked))
 
@@ -57,16 +58,10 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     (m,n) = Data.shape # m: num of observations, n: size of observation vector
     logging.debug("completed getting the data")
 
+    cluster_reassignment = min(cluster_reassignment, m/float(num_clusters))
+
     ############
     ##The basic folder to be created
-    str_NULL = prefix_string + "lam_sparse=" + str(lam_sparse) + "maxClusters=" +str(num_clusters+1)+"/"
-    if not os.path.exists(os.path.dirname(str_NULL)):
-        try:
-            os.makedirs(os.path.dirname(str_NULL))
-        except OSError as exc: # Guard against race condition of path already existing
-            if exc.errno != errno.EEXIST:
-                raise
-
     ###-------INITIALIZATION----------
     # Train test split
     training_indices = getTrainTestSplit(m, num_blocks, num_stacked) #indices of the training samples
@@ -83,13 +78,6 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     gmm = mixture.GaussianMixture(n_components=num_clusters, covariance_type="full")
     gmm.fit(complete_D_train)
     clustered_points = gmm.predict(complete_D_train) 
-    gmm_clustered_pts = clustered_points + 0
-    gmm_covariances = gmm.covariances_
-    gmm_means = gmm.means_
-    # USE K-means
-    kmeans = KMeans(n_clusters = num_clusters,random_state = 0).fit(complete_D_train)
-    clustered_points_kmeans = kmeans.labels_ #todo, is there a difference between these two?
-    kmeans_clustered_pts = kmeans.labels_
 
     train_cluster_inverse = {}
     log_det_values = {} # log dets of the thetas
@@ -226,43 +214,6 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
         for cluster in range(num_clusters):
             logging.debug("length of cluseter %s ----> %s" % (cluster, sum([x== cluster for x in clustered_points]) ))
 
-        true_confusion_matrix = compute_confusion_matrix(num_clusters,clustered_points,training_indices)
-
-        ####TEST SETS STUFF
-        ### LLE + swtiching_penalty
-        ##Segment length
-        ##Create the F1 score from the graphs from k-means and GMM
-        ##Get the train and test points
-        train_confusion_matrix_EM = compute_confusion_matrix(num_clusters, clustered_points,training_indices)
-        train_confusion_matrix_GMM = compute_confusion_matrix(num_clusters, gmm_clustered_pts,training_indices)
-        train_confusion_matrix_kmeans = compute_confusion_matrix(num_clusters, kmeans_clustered_pts,training_indices)
-        ###compute the matchings
-        matching_Kmeans = find_matching(train_confusion_matrix_kmeans)
-        matching_GMM = find_matching(train_confusion_matrix_GMM)
-        matching_EM = find_matching(train_confusion_matrix_EM)
-
-        correct_EM = 0
-        correct_GMM = 0
-        correct_KMeans = 0
-        for cluster in range(num_clusters):
-            matched_cluster_EM = matching_EM[cluster]
-            matched_cluster_GMM = matching_GMM[cluster]
-            matched_cluster_Kmeans = matching_Kmeans[cluster]
-
-            correct_EM += train_confusion_matrix_EM[cluster,matched_cluster_EM]
-            correct_GMM += train_confusion_matrix_GMM[cluster,matched_cluster_GMM]
-            correct_KMeans += train_confusion_matrix_kmeans[cluster, matched_cluster_Kmeans]
-        binary_EM = correct_EM/len(clustered_points)
-        binary_GMM = correct_GMM/len(gmm_clustered_pts)
-        binary_Kmeans = correct_KMeans/len(kmeans_clustered_pts)
-
-        ##compute the F1 macro scores
-        f1_EM_tr = -1#computeF1_macro(train_confusion_matrix_EM,matching_EM,num_clusters)
-        f1_GMM_tr = -1#computeF1_macro(train_confusion_matrix_GMM,matching_GMM,num_clusters)
-        f1_kmeans_tr = -1#computeF1_macro(train_confusion_matrix_kmeans,matching_Kmeans,num_clusters)
-
-        logging.info("\n\n\n")
-
         if np.array_equal(old_clustered_points,clustered_points):
             logging.info("\n\n\n\nCONVERGED!!! BREAKING EARLY!!!")
             converged=True
@@ -273,30 +224,6 @@ def solve(window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
     if pool is not None:
         pool.close()
         pool.join()
-
-    train_confusion_matrix_EM = compute_confusion_matrix(num_clusters,clustered_points,training_indices)
-    train_confusion_matrix_GMM = compute_confusion_matrix(num_clusters,gmm_clustered_pts,training_indices)
-    train_confusion_matrix_kmeans = compute_confusion_matrix(num_clusters,clustered_points_kmeans,training_indices)
-
-    f1_EM_tr = -1#computeF1_macro(train_confusion_matrix_EM,matching_EM,num_clusters)
-    f1_GMM_tr = -1#computeF1_macro(train_confusion_matrix_GMM,matching_GMM,num_clusters)
-    f1_kmeans_tr = -1#computeF1_macro(train_confusion_matrix_kmeans,matching_Kmeans,num_clusters)
-
-    correct_EM = 0
-    correct_GMM = 0
-    correct_KMeans = 0
-    for cluster in range(num_clusters):
-        matched_cluster_EM = matching_EM[cluster]
-        matched_cluster_GMM = matching_GMM[cluster]
-        matched_cluster_Kmeans = matching_Kmeans[cluster]
-
-        correct_EM += train_confusion_matrix_EM[cluster,matched_cluster_EM]
-        correct_GMM += train_confusion_matrix_GMM[cluster,matched_cluster_GMM]
-        correct_KMeans += train_confusion_matrix_kmeans[cluster, matched_cluster_Kmeans]
-        # np.savetxt("computed estimated_matrix cluster =" + str(cluster) + ".csv", train_cluster_inverse[matched_cluster] , delimiter = ",", fmt = "%1.6f")
-    binary_EM = correct_EM/num_train_points
-    binary_GMM = correct_GMM/num_train_points
-    binary_Kmeans = correct_KMeans/num_train_points
 
     #########################################################
     ##DONE WITH EVERYTHING 
