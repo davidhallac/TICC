@@ -36,7 +36,7 @@ class ADMMSolver:
     def ADMM_x(self):    
         a = self.z-self.u
         A = self.upper2Full(a)
-        eta = 1/self.rho
+        eta = self.rho
         x_update = self.Prox_logdet(self.S, A, eta)
         self.x = numpy.array(x_update).T.reshape(-1)
 
