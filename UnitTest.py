@@ -76,9 +76,6 @@ class TestStringMethods(unittest.TestCase):
                            write_out_file=False, prefix_string="output_folder/", num_proc=1, biased=True)
         (biased_cluster_assignment, biased_cluster_MRFs) = biased_ticc.fit(input_file=fname)
 
-        print(biased_cluster_assignment)
-        print(unbiased_cluster_assignment)
-
         np.testing.assert_array_equal(np.array(biased_cluster_assignment), np.array(unbiased_cluster_assignment), "Biased assignment is not equel to unbiased assignment!")
 
     def test_failed_unbiased(self):

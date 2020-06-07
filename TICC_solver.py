@@ -28,7 +28,7 @@ class TICC:
             - write_out_file: (bool) if true, prefix_string is output file dir
             - prefix_string: output directory if necessary
             - cluster_reassignment: number of points to reassign to a 0 cluster
-            - biased: Using the biased covariance or the unbiased
+            - biased: Using the biased or the unbiased covariance
         """
         self.window_size = window_size
         self.number_of_clusters = number_of_clusters
