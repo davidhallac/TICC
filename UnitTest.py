@@ -64,6 +64,34 @@ class TestStringMethods(unittest.TestCase):
                 #Test failed
                 self.assertTrue(1==0)
 
+    def test_biased_vs_unbiased(self):
+        fname = "example_data.txt"
+        unbiased_ticc = TICC(window_size=1, number_of_clusters=8, lambda_parameter=11e-2, beta=600, maxIters=100,
+                             threshold=2e-5,
+                             write_out_file=False, prefix_string="output_folder/", num_proc=1)
+        (unbiased_cluster_assignment, unbiased_cluster_MRFs) = unbiased_ticc.fit(input_file=fname)
+
+        biased_ticc = TICC(window_size=1, number_of_clusters=8, lambda_parameter=11e-2, beta=600, maxIters=100,
+                           threshold=2e-5,
+                           write_out_file=False, prefix_string="output_folder/", num_proc=1, biased=True)
+        (biased_cluster_assignment, biased_cluster_MRFs) = biased_ticc.fit(input_file=fname)
+
+        print(biased_cluster_assignment)
+        print(unbiased_cluster_assignment)
+
+        np.testing.assert_array_equal(np.array(biased_cluster_assignment), np.array(unbiased_cluster_assignment), "Biased assignment is not equel to unbiased assignment!")
+
+    def test_failed_unbiased(self):
+        with self.assertRaises(Exception) as context:
+            # TICC will fail in Iteration 2, because cluster 9 has only one observation.
+            fname = "example_data.txt"
+            ticc = TICC(window_size=1, number_of_clusters=50, lambda_parameter=11e-2, beta=600, maxIters=100,
+                        threshold=2e-5,
+                        write_out_file=False, prefix_string="output_folder/", num_proc=1)
+            (cluster_assignment, cluster_MRFs) = ticc.fit(input_file=fname)
+
+        self.assertTrue('This is broken {}'.format(context.exception))
+
 
 if __name__ == '__main__':
     unittest.main()
