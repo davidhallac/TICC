@@ -1,2 +1,6 @@
 /**/*.pyc
 
+
+.idea/
+
+Results.txt

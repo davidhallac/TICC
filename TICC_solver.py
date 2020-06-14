@@ -16,7 +16,7 @@ from src.admm_solver import ADMMSolver
 class TICC:
     def __init__(self, window_size=10, number_of_clusters=5, lambda_parameter=11e-2,
                  beta=400, maxIters=1000, threshold=2e-5, write_out_file=False,
-                 prefix_string="", num_proc=1, compute_BIC=False, cluster_reassignment=20):
+                 prefix_string="", num_proc=1, compute_BIC=False, cluster_reassignment=20, biased=False):
         """
         Parameters:
             - window_size: size of the sliding window
@@ -28,6 +28,7 @@ class TICC:
             - write_out_file: (bool) if true, prefix_string is output file dir
             - prefix_string: output directory if necessary
             - cluster_reassignment: number of points to reassign to a 0 cluster
+            - biased: Using the biased or the unbiased covariance
         """
         self.window_size = window_size
         self.number_of_clusters = number_of_clusters
@@ -41,6 +42,7 @@ class TICC:
         self.compute_BIC = compute_BIC
         self.cluster_reassignment = cluster_reassignment
         self.num_blocks = self.window_size + 1
+        self.biased = biased
         pd.set_option('display.max_columns', 500)
         np.set_printoptions(formatter={'float': lambda x: "{0:0.4f}".format(x)})
         np.random.seed(102)
@@ -328,7 +330,7 @@ class TICC:
                 ##Fit a model - OPTIMIZATION
                 probSize = self.window_size * size_blocks
                 lamb = np.zeros((probSize, probSize)) + self.lambda_parameter
-                S = np.cov(np.transpose(D_train))
+                S = np.cov(np.transpose(D_train), bias=self.biased)
                 empirical_covariances[cluster] = S
 
                 rho = 1
